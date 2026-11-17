@@ -1,11 +1,32 @@
-# WEiDA Python migration
+# WEiDA Python
 
-Four functions in `weida.py` correspond to the four numbered sections of [StateSpace_modelling.m](https://github.com/chenfei-ye/WEIDA-DBS/blob/main/StateSpace_modelling.m). Install `requirements.txt`, then run:
+Four functions mirror the four numbered stages of [StateSpace_modelling.m](https://github.com/chenfei-ye/WEIDA-DBS/blob/main/StateSpace_modelling.m):
+
+1. `compute_weighted_eigenvectors`: detrend, demean, 0.04–0.07 Hz Butterworth filtering, Hilbert phase, weighted eigenvectors.
+2. `cluster_brain_states`: four-state K-means (300 restarts, 500 iterations), squared distances, within-cluster sums and exact squared-Euclidean silhouette.
+3. `analyze_state_occupancy`: occupancy and dwell time excluding incomplete boundary runs.
+4. `calculate_state_dynamics`: order states by overall frequency, calculate scan transitions and eligible-scan group averages.
+
+## Run
 
 ```
-python run_weida.py /path/to/PD_DBS_zcc/derivatives/fmripost output --tr 2.1
+pip install -r requirements.txt
+python run_weida.py /path/to/PD_DBS_zcc/derivatives/fmripost output --exclude-stn 18 --tr 2.1
+python -m unittest discover -v
 ```
 
-The loader selects HC and STN on/off AAL1ctx CSVs, removes the index column, checks region names, and excludes STN18 in both conditions because its ON scan has 53 zero regions. Results and subject ordering are stored in NPZ and JSON. State labels are zero-based. Input is never modified. Confirm TR and inclusion criteria before interpreting results.
+The current dataset has 15 HC and 26 STN pairs. STNon18 has 53 zero regions; explicitly excluding pair 18 gives 15 HC + 25 OFF + 25 ON scans. The loader verifies matching atlas headers, unique scans and ON/OFF pairing. GPI is not included. Exclusions are recorded; no subjects are silently excluded. Verify actual TR and scientific inclusion criteria before interpreting results. The input is never modified.
 
-This is a preliminary translation, not a validated reproduction. MATLAB eigs and NumPy eigenvectors have arbitrary individual signs; eigenvector degeneracy and k-means initialization can materially change results. MATLAB/Python numerical equivalence and scientific reproducibility remain to be checked. Unlike the original, absent transition rows are NaN, and variable scan lengths are supported. The MATLAB silhouette statistic is not currently calculated.
+## Numerical contract and limitations
+
+This is an equation-level migration, NOT a validated MATLAB reproduction. The source weights multiple eigenvectors before fixing the sign of their sum. Individual eigenvectors have arbitrary signs, so swapping eigensolvers can change the scientific result. This implementation explicitly orients EACH eigenvector so its largest absolute component is positive, then applies the source's overall sign rule. This is an intentional methodological convention, not a demonstrated equivalence to MATLAB eigs. Near-degenerate eigenspaces remain ambiguous. A MATLAB reference comparison is still required before scientific use.
+
+Filtering explicitly uses padding length `3*(max(len(a),len(b))-1)` rather than SciPy's different default; MATLAB version-specific endpoint behavior remains unverified. K-means random initialization differs across libraries. Results must be compared after state-label matching, not by raw label numbers. The original silhouette is calculated exactly and may be expensive for large datasets.
+
+## Outputs
+
+`clustering.npz` retains unsorted labels, centers, squared distances, SUMD-equivalent sums and silhouette. `results.npz` contains sorted centers, occupancy, dwell time, zero-based states, scan transitions, valid-source masks and group transitions. Scan boundaries are stored in `lengths`; `metadata.json` records scan order, region names and parameters.
+
+CSV outputs include `Vemp.csv` (regions x states), `State_ts.csv` (one-based), `Ptrans1.csv` etc., and HC/OFF/ON group files `P1emp.csv`, `LT1emp.csv`, `PTR1emp.csv` etc. Occupancy/dwell CSVs have only the corresponding group's rows, unlike MATLAB's all-scan NaN placeholders; use metadata to recover subject IDs. Missing source states yield zero rows per scan, as in MATLAB; group averaging excludes those scans for that source state. No valid contributors yields NaN.
+
+Tests cover complete-run dwell, scan-boundary isolation, transition averaging, unequal lengths, zero-series rejection and clustering outputs. Full real-data execution and MATLAB reference validation have not yet been performed. Upstream code and paper are credited above; no upstream license or permission to redistribute original source is asserted here.
