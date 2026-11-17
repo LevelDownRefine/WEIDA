@@ -20,8 +20,10 @@ def load_scans(root, exclude_stn=()):
         if any(subject in ('sub-STNon'+n, 'sub-STNoff'+n) for n in exclude_stn): continue
         with path.open(newline='', encoding='utf-8-sig') as f:
             rows = list(csv.reader(f))
+        if len(rows) < 2:
+            raise ValueError(f'CSV 缺少表头或时间序列数据: {path}')
         names = rows[0][1:]
-        if len(names) != 78 or (header is not None and names != header):
+        if len(names) != 78 or len(set(names)) != 78 or (header is not None and names != header):
             raise ValueError(f'Unexpected atlas columns: {path}')
         header = names
         x = np.array([[float(v) for v in row[1:]] for row in rows[1:]]).T

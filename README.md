@@ -48,7 +48,7 @@ CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执�
 
 详见 [测试说明](validation/README.md) 和 [MATLAB 委托测试说明](validation/HANDOFF.md)。
 
-现有 9 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
+现有 22 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
 
 完整真实数据运行及 MATLAB 基准对照仍未完成。委托 MATLAB 操作者无需安装 Python 或 uv；只有准备测试包、接收并比较结果的一方使用 uv。
 
