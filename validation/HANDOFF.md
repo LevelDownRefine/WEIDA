@@ -15,7 +15,7 @@
 接收方在 Python 仓库运行：
 
 ```
-python validation/compare.py --compare-only --output /path/to/returned-folder
+uv run --locked python validation/compare.py --compare-only --output /path/to/returned-folder
 ```
 
 该命令先验证输入和脚本的 SHA256，再生成 report.json。不得把 MATLAB 对照通过宣称为已复现论文全部结果。

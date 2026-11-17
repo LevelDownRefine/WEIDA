@@ -10,9 +10,9 @@ Four functions mirror the four numbered stages of [StateSpace_modelling.m](https
 ## Run
 
 ```
-pip install -r requirements.txt
-python run_weida.py /path/to/PD_DBS_zcc/derivatives/fmripost output --exclude-stn 18 --tr 2.1
-python -m unittest discover -v
+uv sync --locked
+uv run --locked python run_weida.py /path/to/PD_DBS_zcc/derivatives/fmripost output --exclude-stn 18 --tr 2.1
+uv run --locked python -m unittest discover -v
 ```
 
 The current dataset has 15 HC and 26 STN pairs. STNon18 has 53 zero regions; explicitly excluding pair 18 gives 15 HC + 25 OFF + 25 ON scans. The loader verifies matching atlas headers, unique scans and ON/OFF pairing. GPI is not included. Exclusions are recorded; no subjects are silently excluded. Verify actual TR and scientific inclusion criteria before interpreting results. The input is never modified.
@@ -34,3 +34,9 @@ Tests cover complete-run dwell, scan-boundary isolation, transition averaging, u
 ## Portable Octave validation
 
 See [validation/README.md](validation/README.md) for a runnable synthetic cross-language comparison and its recorded report. Octave 11.3.0 passed 16 of 17 comparisons; the original-sign weighted eigenvectors differ, as expected from the explicitly changed sign convention. This does not establish MATLAB equivalence.
+
+## Environment
+
+The project uses uv with Python 3.11.14 (`.python-version`). Dependencies are declared in `pyproject.toml` and resolved exactly in `uv.lock`; `.venv` stays local. Run all commands above from the repository root. CI uses the same Python pin and `uv sync --locked`, so it fails if dependency declarations and the lockfile disagree. Update dependencies deliberately with `uv lock --upgrade`, then rerun unit tests and the Octave comparison before committing the new lockfile.
+
+MATLAB operators still do not need Python or uv. Only the package preparation and returned-result comparison use uv.
