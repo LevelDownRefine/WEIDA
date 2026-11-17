@@ -1,0 +1,113 @@
+{
+  "runtime": "11.3.0",
+  "numpy": "2.3.0",
+  "scipy": "1.17.1",
+  "sklearn": "1.9.1",
+  "fixture_seed": 284,
+  "synthetic_only": true,
+  "matlab_equivalence": false,
+  "checks": {
+    "filter_b": {
+      "max_absolute_error": 2.0816681711721685e-17,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "filter_a": {
+      "max_absolute_error": 1.1102230246251565e-16,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "filtered": {
+      "max_absolute_error": 9.325873406851315e-15,
+      "tolerance": 1e-08,
+      "passed": true,
+      "required": false
+    },
+    "circular_phase": {
+      "max_absolute_error": 2.7533531010703882e-14,
+      "tolerance": 1e-08,
+      "passed": true,
+      "required": false
+    },
+    "canonical_features_shared_phase": {
+      "max_absolute_error": 1.1102230246251565e-15,
+      "tolerance": 1e-08,
+      "passed": true,
+      "required": true
+    },
+    "canonical_features_end_to_end": {
+      "max_absolute_error": 1.8388068845354155e-15,
+      "tolerance": 1e-08,
+      "passed": true,
+      "required": false
+    },
+    "original_sign_features_end_to_end": {
+      "max_absolute_error": 0.15540272307668965,
+      "tolerance": 1e-08,
+      "passed": false,
+      "required": false
+    },
+    "cluster_labels_fixed_start": {
+      "max_absolute_error": 0.0,
+      "tolerance": 0,
+      "passed": true,
+      "required": true
+    },
+    "cluster_centers_fixed_start": {
+      "max_absolute_error": 8.881784197001252e-16,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "cluster_distances": {
+      "max_absolute_error": 5.684341886080802e-14,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "cluster_sumd": {
+      "max_absolute_error": 1.7030821197749901e-13,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "silhouette": {
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "occupancy": {
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "dwell_seconds": {
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "state_order": {
+      "max_absolute_error": 0.0,
+      "tolerance": 0,
+      "passed": true,
+      "required": true
+    },
+    "scan_transitions": {
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    },
+    "group_transitions": {
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "passed": true,
+      "required": true
+    }
+  }
+}

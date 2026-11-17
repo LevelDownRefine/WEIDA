@@ -30,3 +30,7 @@ Filtering explicitly uses padding length `3*(max(len(a),len(b))-1)` rather than 
 CSV outputs include `Vemp.csv` (regions x states), `State_ts.csv` (one-based), `Ptrans1.csv` etc., and HC/OFF/ON group files `P1emp.csv`, `LT1emp.csv`, `PTR1emp.csv` etc. Occupancy/dwell CSVs have only the corresponding group's rows, unlike MATLAB's all-scan NaN placeholders; use metadata to recover subject IDs. Missing source states yield zero rows per scan, as in MATLAB; group averaging excludes those scans for that source state. No valid contributors yields NaN.
 
 Tests cover complete-run dwell, scan-boundary isolation, transition averaging, unequal lengths, zero-series rejection and clustering outputs. Full real-data execution and MATLAB reference validation have not yet been performed. Upstream code and paper are credited above; no upstream license or permission to redistribute original source is asserted here.
+
+## Portable Octave validation
+
+See [validation/README.md](validation/README.md) for a runnable synthetic cross-language comparison and its recorded report. Octave 11.3.0 passed 16 of 17 comparisons; the original-sign weighted eigenvectors differ, as expected from the explicitly changed sign convention. This does not establish MATLAB equivalence.
