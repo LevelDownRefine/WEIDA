@@ -57,7 +57,9 @@ def main():
     if args.octave:
         completed=subprocess.run([str(Path(args.octave).resolve()),'--no-gui','--quiet','--eval','run_reference'],cwd=out,capture_output=True,text=True)
         (out/'octave.log').write_text(completed.stdout+'\n'+completed.stderr,encoding='utf-8')
-        if completed.returncode: raise RuntimeError(f'Octave failed; see {out / "octave.log"}')
+        if completed.returncode:
+            print(completed.stdout, file=sys.stderr); print(completed.stderr, file=sys.stderr)
+            raise RuntimeError(f'Octave failed; see {out / "octave.log"}')
     # Always compare against the actual handed-off fixture, not a regenerated RNG stream.
     fixture=loadmat(out/'input.mat',squeeze_me=True)
     bold=fixture['bold']; tr=float(fixture['tr']); phase=fixture['shared_phase']

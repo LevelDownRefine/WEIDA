@@ -6,6 +6,7 @@ cleanup=onCleanup(@() cd(previous));
 diary('runtime.log');
 fprintf('Runtime: %s\n',version);
 ver;
+set(0,'defaultfigurevisible','off');
 try
     reference;
     fprintf('SUCCESS: return reference.mat and runtime.log with input and manifest.\n');

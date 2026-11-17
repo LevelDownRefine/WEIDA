@@ -29,7 +29,7 @@ jobs:
           python-version: '3.11'
           cache: pip
       - run: pip install -r requirements.txt
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave octave-signal octave-statistics
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave octave-signal octave-statistics gnuplot-nox fonts-freefont-otf
       - run: python validation/compare.py --octave /usr/bin/octave --output validation_output
       - uses: actions/upload-artifact@v4
         if: always()
