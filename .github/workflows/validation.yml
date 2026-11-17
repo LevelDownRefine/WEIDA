@@ -1,0 +1,38 @@
+name: WEiDA validation
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  python-unit:
+    runs-on: ubuntu-latest
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -v
+  octave-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends octave octave-signal octave-statistics
+      - run: python validation/compare.py --octave /usr/bin/octave --output validation_output
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: octave-reference-report
+          path: validation_output/

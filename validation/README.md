@@ -20,3 +20,25 @@ Filtering and original-sign end-to-end differences are reported without forcing 
 ## Recorded local verification
 
 Portable Octave 11.3.0 with signal 1.4.7 and statistics 1.8.3 was tested on Windows. See `report_octave_11.3.0.json` for exact errors and Python library versions. Of 17 checks, 16 pass; original-sign features intentionally remain a documented mismatch. The other checks include filtering/phase, canonicalized eigenfeatures, shared-initialization clustering and prescribed-label state statistics. The mismatch is evidence that the current canonicalization is a method change, not a faithful reproduction of the source's eigensolver sign choices. This test does not run the full original script or validate real-data results.
+
+## Unit tests, CI and MATLAB handoff
+
+Run `python -m unittest discover -v` from the repository root. Unit tests use hand-calculated expectations (not snapshots of the implementation): boundary/absent-state dwell, scan boundary isolation, scan-weighted group averages, state remapping and invalid input rejection. A handoff test verifies package generation without an M runtime and checks detection of altered scripts.
+
+GitHub Actions runs Python tests and a separate Octave comparison on pushes and PRs. The Octave job installs signal/statistics from Ubuntu packages and uploads intermediate results, logs and report even on failure. Its green status only asserts the required isolated-stage checks; the original-sign feature difference remains reported, not declared equivalent. Runtime versions are recorded because Ubuntu Octave may differ from the local portable runtime.
+
+Prepare a handoff without MATLAB/Octave:
+
+```
+python validation/compare.py --prepare-only --output validation_output/matlab_handoff
+```
+
+Zip that directory and give it to the MATLAB operator. `HANDOFF.md` contains Chinese instructions. They run `run_reference` and return the folder with `reference.mat` and `runtime.log`. Input/script hashes and version logs accompany the result. The same handoff can be rehearsed with Octave.
+
+Validate returned results without MATLAB/Octave:
+
+```
+python validation/compare.py --compare-only --output /path/to/returned-folder
+```
+
+Retain the original handoff manifest locally and compare it to the returned copy; the bundled manifest detects accidental edits but is not a signature against deliberate replacement. Checks cover the independent reference harness, not all original upstream code or actual clinical data. MATLAB execution remains pending until an operator returns results.
