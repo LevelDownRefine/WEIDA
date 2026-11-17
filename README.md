@@ -1,42 +1,55 @@
-# WEiDA Python
+# WEiDA 脑状态分析：Python 迁移版
 
-Four functions mirror the four numbered stages of [StateSpace_modelling.m](https://github.com/chenfei-ye/WEIDA-DBS/blob/main/StateSpace_modelling.m):
+本项目按原始 [StateSpace_modelling.m](https://github.com/chenfei-ye/WEIDA-DBS/blob/main/StateSpace_modelling.m) 的四个编号阶段组织代码：
 
-1. `compute_weighted_eigenvectors`: detrend, demean, 0.04–0.07 Hz Butterworth filtering, Hilbert phase, weighted eigenvectors.
-2. `cluster_brain_states`: four-state K-means (300 restarts, 500 iterations), squared distances, within-cluster sums and exact squared-Euclidean silhouette.
-3. `analyze_state_occupancy`: occupancy and dwell time excluding incomplete boundary runs.
-4. `calculate_state_dynamics`: order states by overall frequency, calculate scan transitions and eligible-scan group averages.
+| 阶段 | Python 函数 | 作用 |
+| --- | --- | --- |
+| 1 | `compute_weighted_eigenvectors` | 去趋势、去均值、0.04–0.07 Hz 滤波、Hilbert 相位及加权特征向量 |
+| 2 | `cluster_brain_states` | 四状态 K-means，300 次初始化、最多 500 次迭代，计算距离、类内距离总和及轮廓系数 |
+| 3 | `analyze_state_occupancy` | 计算状态占比和持续时间，排除扫描首尾不完整的状态段 |
+| 4 | `calculate_state_dynamics` | 按总体出现频率排序状态，计算每次扫描及各组的转移概率 |
 
-## Run
+## 环境与运行
 
-```
+使用 uv 管理独立环境。Python 固定为 3.11.14，依赖声明在 `pyproject.toml`，具体版本锁定在 `uv.lock`，本地环境位于 `.venv`。
+
+在仓库根目录执行：
+
+```bash
 uv sync --locked
 uv run --locked python run_weida.py /path/to/PD_DBS_zcc/derivatives/fmripost output --exclude-stn 18 --tr 2.1
 uv run --locked python -m unittest discover -v
 ```
 
-The current dataset has 15 HC and 26 STN pairs. STNon18 has 53 zero regions; explicitly excluding pair 18 gives 15 HC + 25 OFF + 25 ON scans. The loader verifies matching atlas headers, unique scans and ON/OFF pairing. GPI is not included. Exclusions are recorded; no subjects are silently excluded. Verify actual TR and scientific inclusion criteria before interpreting results. The input is never modified.
+当前数据包含 15 个 HC 和 26 对 STN。STNon18 有 53 个全零脑区，显式指定 `--exclude-stn 18` 后使用 15 个 HC、25 个 OFF 和 25 个 ON 扫描。入口检查脑区列名、重复扫描和 ON/OFF 配对，只选择 HC 与 STN。排除项会写入元数据，输入文件不会被修改。正式分析前仍需确认实际 TR 和研究纳入标准。
 
-## Numerical contract and limitations
+CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执行 `uv lock --upgrade`，重跑单元测试和 Octave 对照后再提交锁文件。
 
-This is an equation-level migration, NOT a validated MATLAB reproduction. The source weights multiple eigenvectors before fixing the sign of their sum. Individual eigenvectors have arbitrary signs, so swapping eigensolvers can change the scientific result. This implementation explicitly orients EACH eigenvector so its largest absolute component is positive, then applies the source's overall sign rule. This is an intentional methodological convention, not a demonstrated equivalence to MATLAB eigs. Near-degenerate eigenspaces remain ambiguous. A MATLAB reference comparison is still required before scientific use.
+## 数值约定与限制
 
-Filtering explicitly uses padding length `3*(max(len(a),len(b))-1)` rather than SciPy's different default; MATLAB version-specific endpoint behavior remains unverified. K-means random initialization differs across libraries. Results must be compared after state-label matching, not by raw label numbers. The original silhouette is calculated exactly and may be expensive for large datasets.
+当前完成的是公式层面的迁移，尚未证明与 MATLAB 数值等价。
 
-## Outputs
+原脚本先把多个特征向量加权相加，再统一调整总向量符号。单个特征向量的符号任意，替换特征分解器可能改变结果。本版先令每个特征向量绝对值最大分量为正，再应用原脚本的总向量符号规则。这是明确的方法改动，不是已证实等价的移植；近简并特征空间仍存在方向歧义。
 
-`clustering.npz` retains unsorted labels, centers, squared distances, SUMD-equivalent sums and silhouette. `results.npz` contains sorted centers, occupancy, dwell time, zero-based states, scan transitions, valid-source masks and group transitions. Scan boundaries are stored in `lengths`; `metadata.json` records scan order, region names and parameters.
+滤波显式使用延拓长度 `3*(max(len(a),len(b))-1)`，但尚未验证所有 MATLAB 版本的边界行为。不同库的 K-means 初始化也不同，比较结果应先匹配状态，不能直接比较状态编号。轮廓系数使用平方欧氏距离精确计算，大数据时开销较大。
 
-CSV outputs include `Vemp.csv` (regions x states), `State_ts.csv` (one-based), `Ptrans1.csv` etc., and HC/OFF/ON group files `P1emp.csv`, `LT1emp.csv`, `PTR1emp.csv` etc. Occupancy/dwell CSVs have only the corresponding group's rows, unlike MATLAB's all-scan NaN placeholders; use metadata to recover subject IDs. Missing source states yield zero rows per scan, as in MATLAB; group averaging excludes those scans for that source state. No valid contributors yields NaN.
+## 输出文件
 
-Tests cover complete-run dwell, scan-boundary isolation, transition averaging, unequal lengths, zero-series rejection and clustering outputs. Full real-data execution and MATLAB reference validation have not yet been performed. Upstream code and paper are credited above; no upstream license or permission to redistribute original source is asserted here.
+- `clustering.npz`：排序前的标签、聚类中心、平方距离、类内距离总和及轮廓系数。
+- `results.npz`：排序后的中心、占比、持续时间、从 0 开始的状态序列、扫描转移矩阵、有效源状态标记及组平均转移矩阵。
+- `metadata.json`：扫描顺序、受试者标识、脑区名称和参数；`lengths` 保存各扫描长度，便于恢复边界。
+- `Vemp.csv`：脑区 × 状态；`State_ts.csv`：从 1 开始的状态序列。
+- `Ptrans1.csv` 等：按元数据中的扫描顺序导出的个体转移矩阵。
+- `P1emp.csv`、`LT1emp.csv`、`PTR1emp.csv` 等：编号 1/2/3 对应 HC/OFF/ON 的占比、持续时间及组转移矩阵。
 
-## Portable Octave validation
+占比和持续时间 CSV 只保留对应组的行，与原 MATLAB 使用全体扫描行并填充 NaN 的布局不同。单次扫描没有某源状态时，其转移行置零；组平均排除该扫描在此源状态的贡献，整组无有效贡献时为 NaN。
 
-See [validation/README.md](validation/README.md) for a runnable synthetic cross-language comparison and its recorded report. Octave 11.3.0 passed 16 of 17 comparisons; the original-sign weighted eigenvectors differ, as expected from the explicitly changed sign convention. This does not establish MATLAB equivalence.
+## 测试与委托验证
 
-## Environment
+详见 [测试说明](validation/README.md) 和 [MATLAB 委托测试说明](validation/HANDOFF.md)。
 
-The project uses uv with Python 3.11.14 (`.python-version`). Dependencies are declared in `pyproject.toml` and resolved exactly in `uv.lock`; `.venv` stays local. Run all commands above from the repository root. CI uses the same Python pin and `uv sync --locked`, so it fails if dependency declarations and the lockfile disagree. Update dependencies deliberately with `uv lock --upgrade`, then rerun unit tests and the Octave comparison before committing the new lockfile.
+现有 9 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
 
-MATLAB operators still do not need Python or uv. Only the package preparation and returned-result comparison use uv.
+完整真实数据运行及 MATLAB 基准对照仍未完成。委托 MATLAB 操作者无需安装 Python 或 uv；只有准备测试包、接收并比较结果的一方使用 uv。
+
+原研究代码及论文来源见上方链接；本仓库不据此宣称获得上游原始源码的再分发授权。

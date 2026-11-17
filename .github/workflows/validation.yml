@@ -1,9 +1,10 @@
-name: WEiDA validation
+name: WEiDA 测试与验证
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
   python-unit:
+    name: Python 单元测试
     runs-on: ubuntu-latest
     env:
       OMP_NUM_THREADS: '1'
@@ -17,6 +18,7 @@ jobs:
       - run: uv sync --locked
       - run: uv run --locked python -m unittest discover -v
   octave-reference:
+    name: Octave 跨语言对照
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
