@@ -60,3 +60,15 @@ uv run --locked python validation/compare.py --compare-only --output /path/to/re
 ```
 
 请在本地保留原始清单并与回传清单核对。SHA256 清单用于检测意外修改，不是防止蓄意替换的数字签名。此流程对照独立参考实现；拿到实际 MATLAB 回传结果前，不能宣称已完成 MATLAB 验证。
+
+## 在 MATLAB 中直接测 Python
+
+从仓库根目录执行 `uv sync --locked`，然后用 MATLAB R2025b 打开同一目录，执行：
+
+```matlab
+results = runtests('tests/matlab');
+disp(table(results));
+assertSuccess(results);
+```
+
+测试使用项目 `.venv` 的 Python 3.11，在内存中构造输入。每个用例直接调用生产函数并检查手算结果，无需 `input.mat`、受试者数据或额外 MATLAB 工具箱。`validation/` 的双实现数值对照是另一套检验。
