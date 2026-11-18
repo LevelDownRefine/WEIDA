@@ -48,7 +48,7 @@ CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执�
 
 详见 [测试说明](validation/README.md) 和 [MATLAB 委托测试说明](validation/HANDOFF.md)。
 
-现有 22 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
+现有 30 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
 
 完整真实数据运行及 MATLAB 基准对照仍未完成。委托 MATLAB 操作者无需安装 Python 或 uv；只有准备测试包、接收并比较结果的一方使用 uv。
 
@@ -61,3 +61,23 @@ uv run --locked python plot_results.py /path/to/output
 ```
 
 默认在 `figures/` 中输出中文 PNG 和 PDF：状态概览、组转移概率、78 脑区状态模式和全部扫描状态序列。误差条为扫描间标准误，不代表显著性检验。中文显示需要微软雅黑、黑体或 Noto Sans CJK SC 字体。
+
+## 下游分析模块
+
+`downstream.py` 提供以下接口，对应上游预测、MSanalysis、calcu_FS 与组间比较的主要计算：
+
+- `predict_bold` / `predict_states`：用已有中心分配新扫描，不重新训练或按新队列频率排序。训练与预测必须使用同一脑区顺序和符号约定。无完整段持续时间返回 NaN（上游预测函数返回 0）。
+- `state_metastability`：按上游公式计算 `sum((特征-固定中心)^2)/(脑区数*(状态帧数-1))`，少于两帧返回 NaN。该指标是特征空间离散度，不是 Kuramoto 相位同步序参量的标准差。
+- `functional_segregation`：按指定状态中心的正/非正权重分成两模块，用 Fisher z 相关计算模块内均值减模块间均值，以及节点指标。两个模块均需至少两个脑区；相关系数裁剪到 ±(1-1e-7)，返回裁剪边数。
+- `paired_comparison`：按受试者 ID 检验 ON−OFF，拒绝重复或不完整配对。每个指标按成对有限值筛选，返回有效人数；零差值方差时不作退化 t 推断。
+- `independent_comparison`：HC 与 OFF/ON 的独立样本 t 检验，默认等方差以对应原脚本，可通过接口显式选择 Welch。
+
+```bash
+uv run --locked python run_features.py /path/to/model/output --output /path/to/new/downstream_output --module-state 2
+```
+
+输入元数据中的原始 CSV 路径必须可访问。输出目录必须尚不存在，避免覆盖已有分析。模块状态编号从 1 开始；我们的状态 2 未必对应论文状态 2，因此不能直接套用论文解释。
+
+输出包括 `features.npz`、`paired_statistics.json`、`independent_statistics.json` 和元数据。BH-FDR 分别作用于每一比较、每一指标族：四个状态、16 条转移或78个节点分别校正，不能解释为对所有分析统一控制。没有有效源状态的转移行先标为缺失再统计。JSON 中不可估计的数值目前使用 Python 的 NaN 表示。
+
+同一数据用于拟合状态再做组间分析，当前结果仅作探索；训练集中心回代标签一致率用于实现检查，不是外部预测准确率。TI 队列的正式预测及 MATLAB 对照尚未执行。现有 Octave 对照仍覆盖原四阶段；新增模块目前依靠单元测试及真实数据试运行验证。
