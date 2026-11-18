@@ -16,7 +16,7 @@ jobs:
           version: '0.11.28'
           enable-cache: true
       - run: uv sync --locked
-      - run: uv run --locked python -m unittest discover -v
+      - run: uv run --locked python -m unittest discover -s tests -t . -v
   octave-reference:
     name: Octave 跨语言对照
     runs-on: ubuntu-latest

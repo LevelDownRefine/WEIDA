@@ -7,7 +7,7 @@ from pathlib import Path
 
 class HandoffTests(unittest.TestCase):
     def test_prepare_and_checksum_guard(self):
-        script=Path(__file__).parent/'validation'/'compare.py'
+        script=Path(__file__).resolve().parents[1]/'validation'/'compare.py'
         with tempfile.TemporaryDirectory() as directory:
             result=subprocess.run([sys.executable,str(script),'--prepare-only','--output',directory],capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr)

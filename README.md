@@ -18,7 +18,7 @@
 ```bash
 uv sync --locked
 uv run --locked python run_weida.py /path/to/PD_DBS_zcc/derivatives/fmripost output --exclude-stn 18 --tr 2.1
-uv run --locked python -m unittest discover -v
+uv run --locked python -m unittest discover -s tests -t . -v
 ```
 
 当前数据包含 15 个 HC 和 26 对 STN。STNon18 有 53 个全零脑区，显式指定 `--exclude-stn 18` 后使用 15 个 HC、25 个 OFF 和 25 个 ON 扫描。入口检查脑区列名、重复扫描和 ON/OFF 配对，只选择 HC 与 STN。排除项会写入元数据，输入文件不会被修改。正式分析前仍需确认实际 TR 和研究纳入标准。

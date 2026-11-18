@@ -5,7 +5,7 @@
 ## 1. 单元测试（UT）
 
 ```bash
-uv run --locked python -m unittest discover -v
+uv run --locked python -m unittest discover -s tests -t . -v
 ```
 
 现有 22 个用例覆盖：完整状态段的持续时间、缺失状态和全程单一状态、扫描边界隔离、按扫描平均的组转移概率、状态排序一致性、非法长度与标签、全零及非有限输入、不同扫描长度、交接包生成和校验。
