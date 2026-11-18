@@ -53,3 +53,11 @@ CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执�
 完整真实数据运行及 MATLAB 基准对照仍未完成。委托 MATLAB 操作者无需安装 Python 或 uv；只有准备测试包、接收并比较结果的一方使用 uv。
 
 原研究代码及论文来源见上方链接；本仓库不据此宣称获得上游原始源码的再分发授权。
+
+## 结果绘图
+
+```bash
+uv run --locked python plot_results.py /path/to/output
+```
+
+默认在 `figures/` 中输出中文 PNG 和 PDF：状态概览、组转移概率、78 脑区状态模式和全部扫描状态序列。误差条为扫描间标准误，不代表显著性检验。中文显示需要微软雅黑、黑体或 Noto Sans CJK SC 字体。
