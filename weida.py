@@ -18,14 +18,25 @@ def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07)):
     It changes the original solver-dependent convention; validate scientifically.
     MATLAB-style filtfilt padding is 3*(max(len(a),len(b))-1).
     """
+    return weighted_eigenvectors_from_amplitudes(
+        preprocess_bold(scan, tr=tr, band=band) for scan in scans)
+
+
+def weighted_eigenvectors_from_amplitudes(scans):
+    """WEiDA phase/eigenvector stage after explicit amplitude preprocessing.
+
+    This entry does no detrending/filtering, preventing double preprocessing
+    when called by the common study runner. Sign conventions are unchanged.
+    """
     chunks, lengths, regions = [], [], None
     for scan in scans:
         x = np.asarray(scan, dtype=float)
-        filtered = preprocess_bold(x, tr=tr, band=band)
+        if x.ndim != 2 or min(x.shape) == 0 or not np.isfinite(x).all():
+            raise ValueError('Expected nonempty finite region x time array')
         if regions is not None and regions != x.shape[0]:
             raise ValueError('Inconsistent region counts')
         regions = x.shape[0]
-        phase = np.angle(hilbert(filtered, axis=1))
+        phase = np.angle(hilbert(x, axis=1))
         chunk = []
         for phi in phase.T:
             values, vectors = np.linalg.eigh(np.cos(phi[:,None]-phi[None,:]))

@@ -11,7 +11,15 @@
 
 ## 环境与运行
 
-已在 WEIDA 内抽出数据读取、幅度预处理、模块汇总和组间统计的共用层，现有入口已接入。接口与算法边界见 [共用研究接口](docs/shared_research_core.md)。PhiID 跨仓库接入和共用作图尚未完成。
+统一入口 `run_study.py` 可选择 WEiDA 或官方 PhiID，共用数据读取、幅度预处理、三组统计、保存格式和分布/配对变化作图。接口与算法边界见 [共用研究接口](docs/shared_research_core.md)。原 WEiDA 脚本保持兼容。
+
+```bash
+uv sync --locked
+uv run --locked python run_study.py /path/to/input output/weida --method weida --preprocessing weida_amplitude --exclude-stn 18
+uv run --locked python run_study.py /path/to/input output/phiid --method phiid --preprocessing weida_amplitude --exclude-stn 18
+```
+
+预处理必须显式选择：`weida_amplitude` 执行去趋势、去均值和 0.04–0.07 Hz 滤波；`loaded` 使用读入幅度。两种算法在统一入口中使用同一配置，不重复滤波。PhiID 依赖锁定到官方 `phyid` 提交；本仓库不自行实现 PhiID 分解公式。
 
 使用 uv 管理独立环境。Python 固定为 3.11.14，依赖声明在 `pyproject.toml`，具体版本锁定在 `uv.lock`，本地环境位于 `.venv`。
 
@@ -50,7 +58,7 @@ CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执�
 
 详见 [测试说明](validation/README.md) 和 [MATLAB 委托测试说明](validation/HANDOFF.md)。
 
-现有 30 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
+现有 41 个单元测试和独立 Octave 对照均已接入 CI。便携 Octave 11.3.0 的记录中，17 项比较有 16 项通过，原符号加权特征向量不一致。这项差异单独报告，不代表已经复现论文，也不代表 MATLAB 等价验证通过。
 
 完整真实数据运行及 MATLAB 基准对照仍未完成。委托 MATLAB 操作者无需安装 Python 或 uv；只有准备测试包、接收并比较结果的一方使用 uv。
 
