@@ -34,7 +34,7 @@ for i=1:count
     rng(104+i,'twister');
     [V,D,flags(i,3)] = eigs(A);
     seed_values(i,:) = diag(D)'; seed_vectors(i,:,:) = reshape(V,[1 n 6]);
-    [V,D,trace,flags(i,4)] = tracedEigs(A);
+    [V,D,trace,flags(i,4),products] = tracedEigs(A);
     handle_values(i,:) = diag(D)'; handle_vectors(i,:,:) = reshape(V,[1 n 6]);
     operator_inputs{i} = trace;
     [V,D,flags(i,5)] = eigs(A,6,'largestabs','StartVector',trace(:,2));
@@ -67,6 +67,10 @@ eigs(squeeze(matrices(1,:,:)));
 info = profile('info'); profile off;
 profile_names = {info.FunctionTable.FunctionName};
 runtime_version = version;
+blas_version=version('-blas'); lapack_version=version('-lapack');
+% The last case is the unresolved near-multiple-eigenvalue matrix.
+save(fullfile(folder,'operator_fixture.mat'),'A','trace','products', ...
+    'blas_version','lapack_version','runtime_version','-v7');
 % Public numerical RNG observations for an independent initialization port.
 stream=RandStream('dsfmt19937','Seed',0,'NormalTransform','Ziggurat');
 rng_fixture.initial_state=stream.State;
@@ -81,11 +85,13 @@ save(fullfile(folder,'eigs_diagnosis.mat'),'matrices','native_values','native_ve
     'profile_names','runtime_version','stream_trials','case_groups','rng_fixture','-v7');
 end
 
-function [V,D,inputs,flag] = tracedEigs(A)
+function [V,D,inputs,flag,products] = tracedEigs(A)
 inputs = zeros(size(A,1),0);
+products = zeros(size(A,1),0);
 [V,D,flag] = eigs(@multiply,size(A,1),6,'largestabs','IsFunctionSymmetric',true);
     function y = multiply(x)
         inputs = [inputs,x];
         y = A*x;
+        products = [products,y];
     end
 end

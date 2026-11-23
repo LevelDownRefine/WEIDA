@@ -45,4 +45,6 @@ jobs:
         if: always()
         with:
           name: eigs-rng-observations
-          path: validation_output/matlab/rng_fixture.mat
+          path: |
+            validation_output/matlab/rng_fixture.mat
+            validation_output/matlab/operator_fixture.mat

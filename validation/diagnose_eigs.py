@@ -10,6 +10,7 @@ from scipy.sparse.linalg import eigsh
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from validation.lanczos_probe import lanczos_probe
+from validation.matlab_start_probe import DefaultStream, default_start
 from weida import weight_eigenvectors
 
 
@@ -40,6 +41,8 @@ def main():
                                for w,v in zip(ref[mode+'_values'],ref[mode+'_vectors'])])
     dense, iterative, lanczos, residuals, correlations, eigenvalue_errors = [], [], [], [], [], []
     lanczos_details = []
+    independent = []
+    generated_start = default_start(len(matrices[0]))
     for i, matrix in enumerate(matrices):
         w,v = np.linalg.eigh(matrix)
         idx = np.argsort(np.abs(w))[-6:][::-1]
@@ -57,9 +60,25 @@ def main():
         w,v,details = lanczos_probe(matrix,trace[:,1])
         lanczos.append(weight_eigenvectors(w,v))
         lanczos_details.append(details)
+        w,v,_ = lanczos_probe(matrix,generated_start)
+        independent.append(weight_eigenvectors(w,v))
     compare('numpy_eigh_identical_matrix',dense)
     compare('scipy_eigsh_matlab_start',iterative)
     compare('python_lanczos_matlab_start',lanczos)
+    compare('python_lanczos_independent_start',independent)
+    rng_observations = None
+    if 'rng_fixture' in ref:
+        fixture = ref['rng_fixture']
+        stream = DefaultStream()
+        uniforms = np.array([stream.uniform() for _ in fixture['uniform']])
+        normals = DefaultStream().normal(len(fixture['normal']))
+        rng_observations = {
+            'sample_count': len(normals),
+            'uniform_max_error': float(np.max(np.abs(uniforms-fixture['uniform']))),
+            'normal_max_error': float(np.max(np.abs(normals-fixture['normal']))),
+            'start_max_error': float(np.max(np.abs(generated_start-ref['operator_inputs'][0][:,1])))}
+        np.testing.assert_array_equal(uniforms,fixture['uniform'])
+        np.testing.assert_allclose(normals,fixture['normal'],rtol=0,atol=1e-12)
     octave_path = folder / 'octave_eigs_diagnosis.mat'
     octave_summary = None
     if octave_path.exists():
@@ -70,6 +89,7 @@ def main():
     report = {'runtime': str(ref['runtime_version']), 'all_converged': bool((ref['flags']==0).all()),
               'octave': octave_summary,
               'lanczos_details': lanczos_details,
+              'independent_rng': rng_observations,
               'results': results, 'numpy_max_eigenpair_residual': max(residuals),
               'numpy_max_eigenvalue_error': max(eigenvalue_errors),
               'dominant_signed_vector_correlations': correlations,
