@@ -48,3 +48,4 @@ jobs:
           path: |
             validation_output/matlab/rng_fixture.mat
             validation_output/matlab/operator_fixture.mat
+            validation_output/matlab/degenerate_sensitivity.json

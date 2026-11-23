@@ -83,6 +83,7 @@ save(fullfile(folder,'eigs_diagnosis.mat'),'matrices','native_values','native_ve
     'repeat_values','repeat_vectors','seed_values','seed_vectors','handle_values', ...
     'handle_vectors','start_values','start_vectors','operator_inputs','flags', ...
     'profile_names','runtime_version','stream_trials','case_groups','rng_fixture','-v7');
+diagnose_degenerate(folder);
 end
 
 function [V,D,inputs,flag,products] = tracedEigs(A)
