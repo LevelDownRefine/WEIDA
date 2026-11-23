@@ -13,6 +13,8 @@ for region=1:size(bold,1)
   phase(region,:)=angle(hilbert(filtered(region,:)));
 end
 native_features=zeros(size(bold,2),size(bold,1));
+native_eigenvalues=zeros(size(bold,2),6);
+native_eigenvectors=zeros(size(bold,2),size(bold,1),6);
 % Same shared phase isolates eigensolver behavior from filter differences.
 shared_features=native_features;
 for t=1:size(bold,2)
@@ -22,7 +24,11 @@ for t=1:size(bold,2)
     [V,L]=eigs(matrix,6,'lm');
     v=V*diag(L)/sum(diag(L));
     if mean(v>0)>.5 || (mean(v>0)==.5 && sum(v(v>0))>-sum(v(v<0))); v=-v; end
-    if mode==1; native_features(t,:)=v'; end
+    if mode==1
+      native_features(t,:)=v';
+      native_eigenvalues(t,:)=diag(L)';
+      native_eigenvectors(t,:,:)=reshape(V,[1 size(V,1) size(V,2)]);
+    end
     if mode==2; shared_features(t,:)=v'; end
   end
 end
@@ -66,5 +72,5 @@ for g=1:2
   end
 end
 runtime_version=version;
-save('reference.mat','b','a','filtered','phase','native_features','shared_features','idx','C','sumd','D','ss','P','LT','transitions','group','order','runtime_version','-v7');
+save('reference.mat','b','a','filtered','phase','native_features','native_eigenvalues','native_eigenvectors','shared_features','idx','C','sumd','D','ss','P','LT','transitions','group','order','runtime_version','-v7');
 fprintf('Reference saved successfully\n');

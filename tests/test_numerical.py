@@ -9,6 +9,7 @@ from weida import (
     calculate_state_dynamics,
     cluster_brain_states,
     compute_weighted_eigenvectors,
+    weight_eigenvectors,
 )
 
 
@@ -29,6 +30,14 @@ class NumericalOracleTests(unittest.TestCase):
         with patch('weida.np.linalg.eigh',return_value=(np.array([1.,3.]),np.diag([-1.,1.]))):
             features,_=compute_weighted_eigenvectors([scan],preprocessed=True)
         np.testing.assert_array_equal(features,np.tile([.25,-.75],(4,1)))
+
+    def test_shared_eigenpairs_weighting_and_validation(self):
+        np.testing.assert_array_equal(weight_eigenvectors([1,3],np.diag([-1,1])),[.25,-.75])
+        np.testing.assert_array_equal(weight_eigenvectors([1,3],-np.eye(2)),[-.25,-.75])
+        for values,vectors in [([1,-1],np.eye(2)), ([1],np.eye(2)),
+                               ([np.nan,1],np.eye(2)), ([1,3],np.eye(2)*1j)]:
+            with self.assertRaises(ValueError):
+                weight_eigenvectors(values,vectors)
 
     def test_filter_parameters_and_scan_compatibility(self):
         x=np.tile(np.arange(30),(8,1))

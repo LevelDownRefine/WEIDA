@@ -24,6 +24,7 @@ from weida import (
     analyze_state_occupancy,
     calculate_state_dynamics,
     compute_weighted_eigenvectors,
+    weight_eigenvectors,
 )
 
 
@@ -89,6 +90,9 @@ def main():
     check('filter_b',b,ref['b']); check('filter_a',a,ref['a'])
     check('filtered',filtered,ref['filtered'],1e-8,args.strict_signal)
     check('circular_phase',np.angle(np.exp(1j*(phase-ref['phase']))),np.zeros_like(phase),1e-8,args.strict_signal)
+    weighted=np.array([weight_eigenvectors(values,vectors)
+                       for values,vectors in zip(ref['native_eigenvalues'],ref['native_eigenvectors'])])
+    check('weighted_features_shared_eigenpairs',weighted,ref['native_features'],1e-8)
     features,_=compute_weighted_eigenvectors([bold],tr)
     check('original_features_shared_phase',shared_features,ref['shared_features'],1e-8)
     check('original_features_end_to_end',features,ref['native_features'],1e-8)

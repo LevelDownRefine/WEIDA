@@ -77,3 +77,15 @@ function testPairById(tc)
 r = tc.TestData.metrics.paired_comparison(array('[4,0,1,0,2,0]'),py.list({'c','a','a','c','b','b'}),py.list({'ON','OFF','ON','OFF','ON','OFF'}));
 tc.verifyEqual(numbers(r{'t'}),sqrt(7),'AbsTol',1e-12); % ON-OFF 分别为 1、2、4
 end
+
+function testWeightingSameMatlabEigenpairs(tc)
+% Same MATLAB eigenpairs on both sides; no sign alignment or Python eigensolve.
+phi = linspace(-2,2,78)';
+[V,D] = eigs(cos(phi-phi'));
+v = zeros(78,1);
+for i=1:size(V,2); v = v + D(i,i)*V(:,i); end
+v = v/sum(sum(D));
+if mean(v>0)>.5 || (mean(v>0)==.5 && sum(v(v>0))>-sum(v(v<0))); v=-v; end
+actual = tc.TestData.model.weight_eigenvectors(array(jsonencode(diag(D))),array(jsonencode(V)));
+tc.verifyEqual(numbers(actual),v,'AbsTol',1e-12);
+end

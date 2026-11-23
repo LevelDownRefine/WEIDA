@@ -10,6 +10,22 @@ from sklearn.metrics import silhouette_samples
 from preprocessing import preprocess_bold
 
 
+def weight_eigenvectors(values, vectors):
+    """Weight solver-returned eigenpairs; apply only the original final sign rule."""
+    if np.iscomplexobj(values) or np.iscomplexobj(vectors):
+        raise ValueError('Expected real eigenpairs')
+    values, vectors = np.asarray(values, dtype=float), np.asarray(vectors, dtype=float)
+    if (values.ndim != 1 or vectors.ndim != 2 or vectors.shape[1] != values.size
+            or min(vectors.shape) == 0 or not np.isfinite(values).all()
+            or not np.isfinite(vectors).all() or not np.isfinite(values.sum()) or values.sum() == 0):
+        raise ValueError('Invalid eigenpairs')
+    v = vectors @ values / values.sum()
+    positive = np.mean(v > 0)
+    if positive > .5 or (positive == .5 and v[v > 0].sum() > -v[v < 0].sum()):
+        v = -v
+    return v
+
+
 def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07), *, preprocessed=False):
     """Stage 1. Return frame x region features and per-scan lengths.
 
@@ -37,10 +53,7 @@ def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07), *, preproces
             values, vectors = np.linalg.eigh(np.cos(phi[:,None]-phi[None,:]))
             idx = np.argsort(np.abs(values))[-min(6,regions):][::-1]
             values, vectors = values[idx], vectors[:,idx]
-            v = vectors @ values / values.sum()
-            positive = np.mean(v > 0)
-            if positive > .5 or (positive == .5 and v[v>0].sum() > -v[v<0].sum()): v = -v
-            chunk.append(v)
+            chunk.append(weight_eigenvectors(values, vectors))
         chunks.append(np.asarray(chunk)); lengths.append(x.shape[1])
     if not chunks: raise ValueError('No scans')
     return np.concatenate(chunks), np.asarray(lengths)

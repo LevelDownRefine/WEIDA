@@ -25,6 +25,7 @@ uv run --locked python validation/compare.py --octave C:/path/to/octave-cli.exe 
 检查内容：
 
 - 滤波系数、滤波信号和相位。
+- 导出 MATLAB/Octave 原始特征对，调用生产函数 `weight_eigenvectors` 单独验证加权及最终定号，不在 Python 重新分解或匹配符号。
 - 原符号的加权特征向量；共享相位的对照用于隔离特征分解器差异。
 - 固定初始中心后的标签、中心、平方距离、类内距离总和及轮廓系数。
 - 占比、持续时间、排序、个体转移及组平均。
