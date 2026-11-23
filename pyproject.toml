@@ -9,12 +9,8 @@ dependencies = [
     "scipy>=1.11",
     "scikit-learn>=1.4",
     "matplotlib>=3.11.2",
-    "phyid",
 ]
 
 [tool.uv]
 package = false
 required-version = ">=0.11.28"
-
-[tool.uv.sources]
-phyid = { git = "https://github.com/Imperial-MIND-lab/integrated-info-decomp.git", rev = "6c5f2e9d33c985efbdf875d45cb5a2a6a5cdbf44" }

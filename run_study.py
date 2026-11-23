@@ -1,32 +1,47 @@
-"""统一运行 WEiDA / PhiID：读取 → 幅度预处理 → 算法 → 三组比较 → 保存与作图。"""
+"""薄入口：选择方法并调用现有脚本，不改变算法、统计或输出格式。"""
 import argparse
-from research_core.study import run_study
+from pathlib import Path
+import subprocess
+import sys
+
+
+def run_study(input_path, output, *, method, phiid_repo=None, arguments=()):
+    source, target = Path(input_path).resolve(), Path(output).resolve()
+    if target.exists():
+        raise FileExistsError(target)
+    if method == 'weida':
+        if phiid_repo is not None:
+            raise ValueError('--phiid-repo only applies to PhiID')
+        script = Path(__file__).resolve().with_name('run_weida.py')
+        command = [sys.executable, str(script), str(source), str(target)]
+    elif method == 'phiid':
+        if phiid_repo is None:
+            raise ValueError('Specify --phiid-repo pointing to the existing PhiID checkout')
+        repo = Path(phiid_repo).resolve()
+        script = repo / 'scripts' / 'run_study.py'
+        if not script.is_file() or not (repo / 'uv.lock').is_file():
+            raise ValueError(f'Expected PhiID checkout with scripts/run_study.py and uv.lock: {repo}')
+        command = ['uv', 'run', '--locked', '--project', str(repo), 'python', str(script),
+                   '--input', str(source), '--output', str(target)]
+    else:
+        raise ValueError(f'Unknown method: {method}')
+    subprocess.run([*command, *arguments], check=True)
+    return target
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__,
+        epilog='在 -- 后传递原脚本参数，例如 -- --tr 2.1 --exclude-stn 18')
+    parser.add_argument('--method', required=True, choices=['weida', 'phiid'])
+    parser.add_argument('--phiid-repo', type=Path)
     parser.add_argument('input')
     parser.add_argument('output')
-    parser.add_argument('--method', required=True, choices=['weida', 'phiid'])
-    parser.add_argument('--preprocessing', required=True, choices=['loaded', 'weida_amplitude'])
-    parser.add_argument('--tr', type=float, default=2.1)
-    parser.add_argument('--exclude-stn', nargs='*', default=[])
-    parser.add_argument('--expected-regions', type=int, default=78)
-    parser.add_argument('--no-plots', action='store_true')
-    parser.add_argument('--k', type=int, help='WEiDA only; default 4')
-    parser.add_argument('--seed', type=int, help='WEiDA only; default 0')
-    parser.add_argument('--replicates', type=int, help='WEiDA only; default 300')
-    parser.add_argument('--lag', type=int, help='PhiID only; default 1 frame')
-    args = parser.parse_args()
-    options = {name: getattr(args, name) for name in ('k', 'seed', 'replicates', 'lag')
-               if getattr(args, name) is not None}
-    allowed = {'weida': {'k', 'seed', 'replicates'}, 'phiid': {'lag'}}
-    if set(options) - allowed[args.method]:
-        parser.error(f'参数不适用于 {args.method}: {sorted(set(options) - allowed[args.method])}')
-    run_study(args.input, args.output, method=args.method, preprocessing=args.preprocessing,
-              tr=args.tr, exclude_stn=args.exclude_stn, expected_regions=args.expected_regions,
-              options=options, plots=not args.no_plots)
-    print(f'{args.method}: {args.output}')
+    # Explicit separator keeps method-specific flags under the original CLI's control.
+    argv = sys.argv[1:]
+    split = argv.index('--') if '--' in argv else len(argv)
+    args = parser.parse_args(argv[:split])
+    run_study(args.input, args.output, method=args.method, phiid_repo=args.phiid_repo,
+              arguments=argv[split+1:])
 
 
 if __name__ == '__main__':

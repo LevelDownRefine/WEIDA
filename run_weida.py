@@ -1,13 +1,61 @@
 """Run WEiDA on AAL1ctx CSV files under a derivatives/fmripost directory."""
 import argparse
+import csv
 import json
 from pathlib import Path
 import numpy as np
 from weida import compute_weighted_eigenvectors, cluster_brain_states, analyze_state_occupancy, calculate_state_dynamics
 
 
-# Compatibility import for existing scripts and MATLAB handoff.
-from research_core.io import load_scans
+def load_scans(root, exclude_stn=()):
+    scans, metadata, header = [], [], None
+    root = Path(root)
+    files = sorted(root.glob('sub-*/*_BOLD_AAL1ctx*.csv'))
+    if (root / 'time_series').is_dir():
+        files = []
+        header = (root / 'rois_labels.txt').read_text(encoding='utf-8-sig').splitlines()
+        if len(header) != 78 or len(set(header)) != 78:
+            raise ValueError('Expected 78 unique AAL1ctx region labels')
+        conditions = {'HC': 'HC', 'STNoff': 'OFF', 'STNon': 'ON'}
+        with (root / 'metadata.csv').open(newline='', encoding='utf-8-sig') as handle:
+            records = sorted(csv.DictReader(handle), key=lambda row: row['subject_id'])
+        for row in records:
+            subject = row['subject_id']
+            if any(subject in ('sub-STNon'+n, 'sub-STNoff'+n) for n in exclude_stn):
+                continue
+            path = root / 'time_series' / subject / 'tseries.csv'
+            x = np.loadtxt(path, delimiter=',', ndmin=2)
+            if x.shape[0] != len(header):
+                raise ValueError(f'Unexpected region count: {path}')
+            scans.append(x)
+            metadata.append({'subject': subject, 'condition': conditions[row['condition']],
+                             'file': str(path), 'frames': x.shape[1]})
+    for path in files:
+        subject = path.parent.name
+        if subject.startswith('sub-HC'): condition = 'HC'
+        elif subject.startswith('sub-STNoff'): condition = 'OFF'
+        elif subject.startswith('sub-STNon'): condition = 'ON'
+        else: continue
+        # Exclude the invalid scan and its pair explicitly.
+        if any(subject in ('sub-STNon'+n, 'sub-STNoff'+n) for n in exclude_stn): continue
+        with path.open(newline='', encoding='utf-8-sig') as f:
+            rows = list(csv.reader(f))
+        if len(rows) < 2:
+            raise ValueError(f'CSV 缺少表头或时间序列数据: {path}')
+        names = rows[0][1:]
+        if len(names) != 78 or len(set(names)) != 78 or (header is not None and names != header):
+            raise ValueError(f'Unexpected atlas columns: {path}')
+        header = names
+        x = np.array([[float(v) for v in row[1:]] for row in rows[1:]]).T
+        if x.shape[0] != 78: raise ValueError(f'Unexpected shape: {path}')
+        scans.append(x); metadata.append({'subject': subject, 'condition': condition, 'file': str(path), 'frames': x.shape[1]})
+    if not scans: raise ValueError('No matching scans found')
+    off = {m['subject'].removeprefix('sub-STNoff') for m in metadata if m['condition']=='OFF'}
+    on = {m['subject'].removeprefix('sub-STNon') for m in metadata if m['condition']=='ON'}
+    if off != on: raise ValueError(f'Unpaired STN IDs: {off ^ on}')
+    ids = [m['subject'] for m in metadata]
+    if len(set(ids)) != len(ids): raise ValueError('Duplicate scans for one subject/condition')
+    return scans, metadata, header
 
 
 def main():
