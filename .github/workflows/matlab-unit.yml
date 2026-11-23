@@ -41,3 +41,8 @@ jobs:
         with:
           name: matlab-reference-report
           path: validation_output/matlab/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eigs-rng-observations
+          path: validation_output/matlab/rng_fixture.mat
