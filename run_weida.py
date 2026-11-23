@@ -9,7 +9,27 @@ from weida import compute_weighted_eigenvectors, cluster_brain_states, analyze_s
 
 def load_scans(root, exclude_stn=()):
     scans, metadata, header = [], [], None
-    files = sorted(Path(root).glob('sub-*/*_BOLD_AAL1ctx*.csv'))
+    root = Path(root)
+    files = sorted(root.glob('sub-*/*_BOLD_AAL1ctx*.csv'))
+    if (root / 'time_series').is_dir():
+        files = []
+        header = (root / 'rois_labels.txt').read_text(encoding='utf-8-sig').splitlines()
+        if len(header) != 78 or len(set(header)) != 78:
+            raise ValueError('Expected 78 unique AAL1ctx region labels')
+        conditions = {'HC': 'HC', 'STNoff': 'OFF', 'STNon': 'ON'}
+        with (root / 'metadata.csv').open(newline='', encoding='utf-8-sig') as handle:
+            records = sorted(csv.DictReader(handle), key=lambda row: row['subject_id'])
+        for row in records:
+            subject = row['subject_id']
+            if any(subject in ('sub-STNon'+n, 'sub-STNoff'+n) for n in exclude_stn):
+                continue
+            path = root / 'time_series' / subject / 'tseries.csv'
+            x = np.loadtxt(path, delimiter=',', ndmin=2)
+            if x.shape[0] != len(header):
+                raise ValueError(f'Unexpected region count: {path}')
+            scans.append(x)
+            metadata.append({'subject': subject, 'condition': conditions[row['condition']],
+                             'file': str(path), 'frames': x.shape[1]})
     for path in files:
         subject = path.parent.name
         if subject.startswith('sub-HC'): condition = 'HC'
@@ -40,7 +60,7 @@ def load_scans(root, exclude_stn=()):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('input', help='fmripost directory')
+    parser.add_argument('input', help='fmripost directory or AAL1ctx PyLEiDA input directory')
     parser.add_argument('output', help='output directory')
     parser.add_argument('--tr', type=float, default=2.1)
     parser.add_argument('--replicates', type=int, default=300)
