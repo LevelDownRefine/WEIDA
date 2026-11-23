@@ -30,7 +30,8 @@ for i=1:count
     start_values(i,:) = diag(D)'; start_vectors(i,:,:) = reshape(V,[1 n 6]);
 end
 % Identify the private starting-vector generator by exported numerical behavior.
-types = RandStream.list;
+types = {'mt19937ar','dsfmt19937','mcg16807','mrg32k3a','mlfg6331_64', ...
+    'swb2712','shr3cong','threefry4x64_20','philox4x32_10'};
 normal_methods = {'Ziggurat','Polar','Inversion'};
 stream_trials = struct('type',{},'seed',{},'normal',{},'error',{});
 target_start = operator_inputs{1}(:,2);
