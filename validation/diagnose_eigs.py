@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.io import loadmat
+from scipy.linalg import eigh_tridiagonal
 from scipy.sparse.linalg import eigsh
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -30,7 +31,7 @@ def main():
     for mode in ('repeat','seed','handle','start'):
         compare('matlab_'+mode,[weight_eigenvectors(w,v)
                                for w,v in zip(ref[mode+'_values'],ref[mode+'_vectors'])])
-    dense, iterative, residuals, correlations, eigenvalue_errors = [], [], [], [], []
+    dense, iterative, lanczos, residuals, correlations, eigenvalue_errors = [], [], [], [], [], []
     for i, matrix in enumerate(matrices):
         w,v = np.linalg.eigh(matrix)
         idx = np.argsort(np.abs(w))[-6:][::-1]
@@ -40,17 +41,34 @@ def main():
         eigenvalue_errors.append(float(np.max(np.abs(w-ref['native_values'][i]))))
         correlations.append(np.diag(v[:,:2].T@ref['native_vectors'][i,:,:2]).tolist())
         trace = ref['operator_inputs'][i]
-        w,v = eigsh(matrix,k=6,which='LM',v0=trace[:,0],ncv=20,tol=1e-14,maxiter=300)
+        w,v = eigsh(matrix,k=6,which='LM',v0=trace[:,1],ncv=20,tol=1e-14,maxiter=300)
         idx = np.argsort(np.abs(w))[::-1]
         iterative.append(weight_eigenvectors(w[idx],v[:,idx]))
+        # Diagnostic reconstruction: MATLAB's starting vector, then Python-only
+        # Lanczos, two-pass reorthogonalization and tridiagonal QR. No sign matching.
+        Q=np.zeros((len(matrix),20)); Q[:,0]=trace[:,1]
+        diagonal=np.zeros(20); off_diagonal=np.zeros(19)
+        for j in range(20):
+            residual=matrix@Q[:,j]; diagonal[j]=Q[:,j]@residual
+            residual-=diagonal[j]*Q[:,j]
+            if j: residual-=off_diagonal[j-1]*Q[:,j-1]
+            for _ in range(2): residual-=Q[:,:j+1]@(Q[:,:j+1].T@residual)
+            if j<19:
+                off_diagonal[j]=np.linalg.norm(residual)
+                Q[:,j+1]=residual/off_diagonal[j]
+        w,v=eigh_tridiagonal(diagonal,off_diagonal,lapack_driver='stev')
+        idx=np.argsort(np.abs(w))[-6:][::-1]
+        lanczos.append(weight_eigenvectors(w[idx],Q@v[:,idx]))
     compare('numpy_eigh_identical_matrix',dense)
-    compare('scipy_eigsh_matlab_first_operator_input',iterative)
+    compare('scipy_eigsh_matlab_start',iterative)
+    compare('python_lanczos_matlab_start',lanczos)
     report = {'runtime': str(ref['runtime_version']), 'all_converged': bool((ref['flags']==0).all()),
               'results': results, 'numpy_max_eigenpair_residual': max(residuals),
               'numpy_max_eigenvalue_error': max(eigenvalue_errors),
               'dominant_signed_vector_correlations': correlations,
               'operator_call_counts': [int(x.shape[1]) for x in ref['operator_inputs']],
-              'profile_names': np.atleast_1d(ref['profile_names']).tolist()}
+              'profile_names': np.atleast_1d(ref['profile_names']).tolist(),
+              'closest_stream_trials': sorted(ref['stream_trials'],key=lambda x:x['error'])[:5]}
     (folder / 'eigs_diagnosis.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps({k:v for k,v in report.items() if k not in ('profile_names','dominant_signed_vector_correlations')},indent=2))
 

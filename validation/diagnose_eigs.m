@@ -26,8 +26,28 @@ for i=1:count
     [V,D,trace,flags(i,4)] = tracedEigs(A);
     handle_values(i,:) = diag(D)'; handle_vectors(i,:,:) = reshape(V,[1 n 6]);
     operator_inputs{i} = trace;
-    [V,D,flags(i,5)] = eigs(A,6,'largestabs','StartVector',trace(:,1));
+    [V,D,flags(i,5)] = eigs(A,6,'largestabs','StartVector',trace(:,2));
     start_values(i,:) = diag(D)'; start_vectors(i,:,:) = reshape(V,[1 n 6]);
+end
+% Identify the private starting-vector generator by exported numerical behavior.
+types = RandStream.list;
+normal_methods = {'Ziggurat','Polar','Inversion'};
+stream_trials = struct('type',{},'seed',{},'normal',{},'error',{});
+target_start = operator_inputs{1}(:,2);
+for j=1:numel(types)
+  for seed=[0 1 5489]
+    for k=1:numel(normal_methods)
+      try
+        stream=RandStream(types{j},'Seed',seed,'NormalTransform',normal_methods{k});
+        z=randn(stream,n,1); z=z/norm(z);
+        trial.type=types{j}; trial.seed=seed; trial.normal=normal_methods{k};
+        trial.error=max(abs(z-target_start));
+        stream_trials(end+1)=trial;
+      catch
+        % Unsupported generator/normal-transform combinations are not candidates.
+      end
+    end
+  end
 end
 % Names only: useful for identifying the actual solver family without copying source.
 profile clear; profile on;
@@ -38,7 +58,7 @@ runtime_version = version;
 save(fullfile(folder,'eigs_diagnosis.mat'),'matrices','native_values','native_vectors', ...
     'repeat_values','repeat_vectors','seed_values','seed_vectors','handle_values', ...
     'handle_vectors','start_values','start_vectors','operator_inputs','flags', ...
-    'profile_names','runtime_version','-v7');
+    'profile_names','runtime_version','stream_trials','-v7');
 end
 
 function [V,D,inputs,flag] = tracedEigs(A)
