@@ -6,10 +6,10 @@ from pathlib import Path
 
 import numpy as np
 from scipy.io import loadmat
-from scipy.linalg import eigh_tridiagonal
 from scipy.sparse.linalg import eigsh
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from validation.lanczos_probe import lanczos_probe
 from weida import weight_eigenvectors
 
 
@@ -39,6 +39,7 @@ def main():
         compare('matlab_'+mode,[weight_eigenvectors(w,v)
                                for w,v in zip(ref[mode+'_values'],ref[mode+'_vectors'])])
     dense, iterative, lanczos, residuals, correlations, eigenvalue_errors = [], [], [], [], [], []
+    lanczos_details = []
     for i, matrix in enumerate(matrices):
         w,v = np.linalg.eigh(matrix)
         idx = np.argsort(np.abs(w))[-6:][::-1]
@@ -53,19 +54,9 @@ def main():
         iterative.append(weight_eigenvectors(w[idx],v[:,idx]))
         # Diagnostic reconstruction: MATLAB's starting vector, then Python-only
         # Lanczos, two-pass reorthogonalization and tridiagonal QR. No sign matching.
-        Q=np.zeros((len(matrix),20)); Q[:,0]=trace[:,1]
-        diagonal=np.zeros(20); off_diagonal=np.zeros(19)
-        for j in range(20):
-            residual=matrix@Q[:,j]; diagonal[j]=Q[:,j]@residual
-            residual-=diagonal[j]*Q[:,j]
-            if j: residual-=off_diagonal[j-1]*Q[:,j-1]
-            for _ in range(2): residual-=Q[:,:j+1]@(Q[:,:j+1].T@residual)
-            if j<19:
-                off_diagonal[j]=np.linalg.norm(residual)
-                Q[:,j+1]=residual/off_diagonal[j]
-        w,v=eigh_tridiagonal(diagonal,off_diagonal,lapack_driver='stev')
-        idx=np.argsort(np.abs(w))[-6:][::-1]
-        lanczos.append(weight_eigenvectors(w[idx],Q@v[:,idx]))
+        w,v,details = lanczos_probe(matrix,trace[:,1])
+        lanczos.append(weight_eigenvectors(w,v))
+        lanczos_details.append(details)
     compare('numpy_eigh_identical_matrix',dense)
     compare('scipy_eigsh_matlab_start',iterative)
     compare('python_lanczos_matlab_start',lanczos)
@@ -78,6 +69,7 @@ def main():
                           'all_converged': bool((octave['flags'] == 0).all())}
     report = {'runtime': str(ref['runtime_version']), 'all_converged': bool((ref['flags']==0).all()),
               'octave': octave_summary,
+              'lanczos_details': lanczos_details,
               'results': results, 'numpy_max_eigenpair_residual': max(residuals),
               'numpy_max_eigenvalue_error': max(eigenvalue_errors),
               'dominant_signed_vector_correlations': correlations,
@@ -85,7 +77,7 @@ def main():
               'profile_names': np.atleast_1d(ref['profile_names']).tolist(),
               'closest_stream_trials': sorted(ref['stream_trials'],key=lambda x:x['error'])[:5]}
     (folder / 'eigs_diagnosis.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
-    print(json.dumps({k:v for k,v in report.items() if k not in ('profile_names','dominant_signed_vector_correlations')},indent=2))
+    print(json.dumps({k:v for k,v in report.items() if k not in ('profile_names','dominant_signed_vector_correlations','lanczos_details')},indent=2))
 
 
 if __name__ == '__main__':
