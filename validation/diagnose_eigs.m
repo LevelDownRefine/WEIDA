@@ -5,6 +5,17 @@ indices = [1 2 17 39 77 105 145 190 210];
 phases = ref.phase(:,indices);
 rng(125,'twister');
 phases = [phases, 2*pi*rand(size(phases,1),12)];
+% Held-out cases and low-rank/degenerate boundaries; never use them to fit signs.
+rng(20261123,'twister');
+phases = [phases, 2*pi*rand(size(phases,1),100)];
+n = size(phases,1);
+boundary = [zeros(n,1), ones(n,1), linspace(0,1e-8,n)', ...
+    [zeros(n/2,1); (pi/2)*ones(n/2,1)], (0:n-1)'*2*pi/n];
+phases = [phases, boundary];
+case_groups = [repmat({'reference'},1,9), repmat({'random_seed_125'},1,12), ...
+    repmat({'heldout_seed_20261123'},1,100), ...
+    {'constant_zero','constant_one','almost_constant','equal_eigenvalues_blocks', ...
+     'equal_eigenvalues_circle'}];
 n = size(phases,1); count = size(phases,2);
 matrices = zeros(count,n,n);
 native_values = zeros(count,6); native_vectors = zeros(count,n,6);
@@ -59,7 +70,7 @@ runtime_version = version;
 save(fullfile(folder,'eigs_diagnosis.mat'),'matrices','native_values','native_vectors', ...
     'repeat_values','repeat_vectors','seed_values','seed_vectors','handle_values', ...
     'handle_vectors','start_values','start_vectors','operator_inputs','flags', ...
-    'profile_names','runtime_version','stream_trials','-v7');
+    'profile_names','runtime_version','stream_trials','case_groups','-v7');
 end
 
 function [V,D,inputs,flag] = tracedEigs(A)

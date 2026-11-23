@@ -27,6 +27,13 @@ def main():
         error = np.max(np.abs(np.asarray(actual)-target),axis=1)
         results[name] = {'matching_cases': int((error < 1e-8).sum()),
                          'total_cases': len(target), 'max_absolute_error': float(error.max())}
+        if 'case_groups' in ref:
+            groups = np.asarray(ref['case_groups'])
+            results[name]['groups'] = {
+                group: {'matching_cases': int((error[groups == group] < 1e-8).sum()),
+                        'total_cases': int((groups == group).sum()),
+                        'max_absolute_error': float(error[groups == group].max())}
+                for group in dict.fromkeys(groups.tolist())}
 
     for mode in ('repeat','seed','handle','start'):
         compare('matlab_'+mode,[weight_eigenvectors(w,v)
