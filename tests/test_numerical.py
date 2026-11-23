@@ -1,5 +1,6 @@
 """用解析解和手算预期值检验数值行为，而不是复制实现。"""
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -20,6 +21,14 @@ class NumericalOracleTests(unittest.TestCase):
         np.testing.assert_allclose(features,-np.ones((80,8))/np.sqrt(8),atol=1e-12)
         np.testing.assert_array_equal(scans,original)
         np.testing.assert_array_equal(lengths,[80])
+
+    def test_preserve_individual_eigenvector_signs_before_weighting(self):
+        # Inject solver output to isolate the original weighted-sum/sign rule.
+        # Raw sum: [-1, 3]/4; only the final vector flips to [1, -3]/4.
+        scan=np.tile(np.arange(4.),(2,1))
+        with patch('weida.np.linalg.eigh',return_value=(np.array([1.,3.]),np.diag([-1.,1.]))):
+            features,_=compute_weighted_eigenvectors([scan],preprocessed=True)
+        np.testing.assert_array_equal(features,np.tile([.25,-.75],(4,1)))
 
     def test_filter_parameters_and_scan_compatibility(self):
         x=np.tile(np.arange(30),(8,1))

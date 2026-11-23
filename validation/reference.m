@@ -13,7 +13,6 @@ for region=1:size(bold,1)
   phase(region,:)=angle(hilbert(filtered(region,:)));
 end
 native_features=zeros(size(bold,2),size(bold,1));
-canonical_features=native_features;
 % Same shared phase isolates eigensolver behavior from filter differences.
 shared_features=native_features;
 for t=1:size(bold,2)
@@ -24,13 +23,7 @@ for t=1:size(bold,2)
     v=V*diag(L)/sum(diag(L));
     if mean(v>0)>.5 || (mean(v>0)==.5 && sum(v(v>0))>-sum(v(v<0))); v=-v; end
     if mode==1; native_features(t,:)=v'; end
-    for j=1:size(V,2)
-      [~,anchor]=max(abs(V(:,j)));
-      if V(anchor,j)<0; V(:,j)=-V(:,j); end
-    end
-    v=V*diag(L)/sum(diag(L));
-    if mean(v>0)>.5 || (mean(v>0)==.5 && sum(v(v>0))>-sum(v(v<0))); v=-v; end
-    if mode==1; canonical_features(t,:)=v'; else; shared_features(t,:)=v'; end
+    if mode==2; shared_features(t,:)=v'; end
   end
 end
 % Shared separated clusters and initial centers isolate K-means semantics.
@@ -73,5 +66,5 @@ for g=1:2
   end
 end
 runtime_version=version;
-save('reference.mat','b','a','filtered','phase','native_features','canonical_features','shared_features','idx','C','sumd','D','ss','P','LT','transitions','group','order','runtime_version','-v7');
+save('reference.mat','b','a','filtered','phase','native_features','shared_features','idx','C','sumd','D','ss','P','LT','transitions','group','order','runtime_version','-v7');
 fprintf('Reference saved successfully\n');
