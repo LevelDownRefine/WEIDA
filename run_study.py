@@ -1,8 +1,8 @@
 """薄入口：选择方法并调用现有脚本，不改变算法、统计或输出格式。"""
 import argparse
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_study(input_path, output, *, method, phiid_repo=None, arguments=()):

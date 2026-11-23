@@ -1,10 +1,11 @@
 """Thin launcher contract: delegation, argument boundaries and failure propagation."""
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
+
 from run_study import main, run_study
 
 
@@ -42,8 +43,8 @@ class LauncherTests(unittest.TestCase):
 
     def test_invalid_paths_or_methods_never_launch(self):
         with patch('run_study.subprocess.run') as run:
-            for kwargs in [dict(method='phiid'), dict(method='phiid', phiid_repo=self.root),
-                           dict(method='weida', phiid_repo=self.root), dict(method='unknown')]:
+            for kwargs in [{'method': 'phiid'}, {'method': 'phiid', 'phiid_repo': self.root},
+                           {'method': 'weida', 'phiid_repo': self.root}, {'method': 'unknown'}]:
                 with self.assertRaises(ValueError):
                     run_study(self.root/'input', self.root/'out', **kwargs)
             with self.assertRaises(FileExistsError):
@@ -51,9 +52,9 @@ class LauncherTests(unittest.TestCase):
             run.assert_not_called()
 
     def test_child_failure_is_not_reported_as_success(self):
-        with patch('run_study.subprocess.run', side_effect=subprocess.CalledProcessError(2, 'child')):
-            with self.assertRaises(subprocess.CalledProcessError):
-                run_study(self.root/'input', self.root/'out', method='weida')
+        with (patch('run_study.subprocess.run', side_effect=subprocess.CalledProcessError(2, 'child')),
+              self.assertRaises(subprocess.CalledProcessError)):
+            run_study(self.root/'input', self.root/'out', method='weida')
 
     def test_separator_preserves_backend_argument_boundaries(self):
         argv = ['run_study.py', '--method', 'phiid', '--phiid-repo', str(self.root),
