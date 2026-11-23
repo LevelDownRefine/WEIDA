@@ -1,7 +1,9 @@
 """CSV 入口测试：临时合成文件，不依赖服务器数据。"""
 import csv
+import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import numpy as np
 from run_weida import load_scans
@@ -49,6 +51,44 @@ class LoaderTests(unittest.TestCase):
             self.write_scan(subject)
         _,meta,_=load_scans(self.root,exclude_stn=['18'])
         self.assertEqual([m['subject'] for m in meta],['sub-HC01'])
+
+    def test_downstream_reloads_headerless_series_and_checks_frame_count(self):
+        from downstream import predict_states, functional_segregation
+        from run_features import main
+        rng = np.random.default_rng(42)
+        centers = np.array([[1, 1, -1, -1], [-1, -1, 1, 1.]])
+        scans, metadata = [], []
+        for condition, prefix in [('HC', 'HC'), ('OFF', 'STNoff'), ('ON', 'STNon')]:
+            for i in range(3):
+                subject = f'sub-{prefix}{i:02}'
+                folder = self.root / 'time_series' / subject
+                folder.mkdir(parents=True)
+                x = rng.normal(size=(4, 30))
+                path = folder / 'tseries.csv'
+                np.savetxt(path, x, delimiter=',')
+                scans.append(x)
+                metadata.append(dict(subject=subject, condition=condition, file=str(path), frames=30))
+        model = self.root / 'model'
+        model.mkdir()
+        info = dict(scans=metadata, regions=['A', 'B', 'C', 'D'], tr=2.1)
+        (model / 'metadata.json').write_text(json.dumps(info))
+        vectors = rng.normal(size=(270, 4))
+        lengths = np.full(9, 30)
+        prediction = predict_states(vectors, centers, lengths)
+        np.savez(model / 'results.npz', vectors=vectors, centers=centers, lengths=lengths,
+                 transition_valid=prediction['transitions'].sum(axis=2) > 0, **prediction)
+        output = self.root / 'features'
+        with patch('sys.argv', ['run_features.py', str(model), '--output', str(output)]):
+            main()
+        with np.load(output / 'features.npz') as result:
+            expected = [functional_segregation(x, centers[1]) for x in scans]
+            np.testing.assert_allclose(result['functional_segregation'],
+                [[x['within'], x['across'], x['segregation']] for x in expected])
+        metadata[0]['frames'] = 31
+        (model / 'metadata.json').write_text(json.dumps(info))
+        with patch('sys.argv', ['run_features.py', str(model), '--output', str(self.root / 'invalid')]):
+            with self.assertRaisesRegex(ValueError, 'BOLD'):
+                main()
 
     def test_pairs_match_ids_not_only_counts(self):
         self.write_scan('sub-STNon01'); self.write_scan('sub-STNoff02')
