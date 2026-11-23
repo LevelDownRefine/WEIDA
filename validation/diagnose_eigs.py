@@ -6,9 +6,11 @@ from pathlib import Path
 
 import numpy as np
 from scipy.io import loadmat
+from scipy.signal import hilbert
 from scipy.sparse.linalg import eigsh
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from preprocessing import preprocess_bold
 from validation.lanczos_probe import lanczos_probe
 from validation.matlab_start_probe import DefaultStream, default_start
 from weida import weight_eigenvectors
@@ -80,6 +82,18 @@ def main():
         np.testing.assert_array_equal(uniforms,fixture['uniform'])
         np.testing.assert_allclose(normals,fixture['normal'],rtol=0,atol=1e-12)
     octave_path = folder / 'octave_eigs_diagnosis.mat'
+    end_to_end = None
+    if (folder / 'input.mat').exists() and (folder / 'reference.mat').exists():
+        inputs = loadmat(folder / 'input.mat', simplify_cells=True)
+        expected = loadmat(folder / 'reference.mat', simplify_cells=True)['native_features']
+        phase = np.angle(hilbert(preprocess_bold(inputs['bold'],tr=float(inputs['tr'])),axis=1))
+        actual = []
+        for phi in phase.T:
+            w,v,_ = lanczos_probe(np.cos(phi[:,None]-phi[None,:]),generated_start)
+            actual.append(weight_eigenvectors(w,v))
+        errors = np.max(np.abs(np.array(actual)-expected),axis=1)
+        end_to_end = {'matching_frames': int((errors < 1e-8).sum()),
+                      'total_frames': len(errors), 'max_absolute_error': float(errors.max())}
     octave_summary = None
     if octave_path.exists():
         octave = loadmat(octave_path, simplify_cells=True)
@@ -90,6 +104,7 @@ def main():
               'octave': octave_summary,
               'lanczos_details': lanczos_details,
               'independent_rng': rng_observations,
+              'independent_end_to_end': end_to_end,
               'results': results, 'numpy_max_eigenpair_residual': max(residuals),
               'numpy_max_eigenvalue_error': max(eigenvalue_errors),
               'dominant_signed_vector_correlations': correlations,
