@@ -31,7 +31,7 @@ jobs:
       - name: Run independent MATLAB reference
         uses: matlab-actions/run-command@v3
         with:
-          command: addpath(fullfile(pwd,'validation_output','matlab')); addpath(fullfile(pwd,'validation')); run_reference; diagnose_eigs(fullfile(pwd,'validation_output','matlab'))
+          command: taskRoot=pwd; addpath(fullfile(taskRoot,'validation')); cd(fullfile(taskRoot,'validation_output','matlab')); run_reference; diagnose_eigs(pwd)
       - name: Diagnose raw eigensolver behavior
         run: uv run --locked python validation/diagnose_eigs.py validation_output/matlab
       - name: Compare MATLAB with Python
