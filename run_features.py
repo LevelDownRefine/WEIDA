@@ -15,9 +15,13 @@ def main():
     ms=state_metastability(r['vectors'],r['states'],r['centers'],r['lengths'])
     fs=[];nodal=[];clip=[]
     for m in meta['scans']:
-        with Path(m['file']).open(encoding='utf-8-sig',newline='') as f: rows=list(csv.reader(f))
-        if rows[0][1:]!=meta['regions']: raise ValueError('脑区顺序与训练模型不一致')
-        x=np.array([[float(v) for v in row[1:]] for row in rows[1:]]).T
+        if Path(m['file']).name == 'tseries.csv':
+            x=np.loadtxt(m['file'],delimiter=',',ndmin=2)
+        else:
+            with Path(m['file']).open(encoding='utf-8-sig',newline='') as f: rows=list(csv.reader(f))
+            if rows[0][1:]!=meta['regions']: raise ValueError('脑区顺序与训练模型不一致')
+            x=np.array([[float(v) for v in row[1:]] for row in rows[1:]]).T
+        if x.shape != (len(meta['regions']), m['frames']): raise ValueError('BOLD 形状与训练模型不一致')
         v=functional_segregation(x,r['centers'][state]); fs.append([v['within'],v['across'],v['segregation']]);nodal.append(v['nodal']);clip.append(v['clipped_edges'])
     fs=np.asarray(fs);nodal=np.asarray(nodal)
     ids=[m['subject'].removeprefix('sub-STNon').removeprefix('sub-STNoff') for m in meta['scans']]
