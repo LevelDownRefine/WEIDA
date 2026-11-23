@@ -69,7 +69,15 @@ def main():
     compare('numpy_eigh_identical_matrix',dense)
     compare('scipy_eigsh_matlab_start',iterative)
     compare('python_lanczos_matlab_start',lanczos)
+    octave_path = folder / 'octave_eigs_diagnosis.mat'
+    octave_summary = None
+    if octave_path.exists():
+        octave = loadmat(octave_path, simplify_cells=True)
+        compare('octave_identical_matlab_matrix', octave['features'])
+        octave_summary = {'runtime': str(octave['runtime_version']),
+                          'all_converged': bool((octave['flags'] == 0).all())}
     report = {'runtime': str(ref['runtime_version']), 'all_converged': bool((ref['flags']==0).all()),
+              'octave': octave_summary,
               'results': results, 'numpy_max_eigenpair_residual': max(residuals),
               'numpy_max_eigenvalue_error': max(eigenvalue_errors),
               'dominant_signed_vector_correlations': correlations,
