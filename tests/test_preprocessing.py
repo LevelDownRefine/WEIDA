@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 import numpy as np
 
-from weida import compute_weighted_eigenvectors, preprocess_bold
+from preprocessing import preprocess_bold
+from weida import compute_weighted_eigenvectors
 
 
 class PreprocessingTests(unittest.TestCase):
