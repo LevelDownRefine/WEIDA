@@ -93,16 +93,19 @@ end
 function testMatlabFeatureHandoff(tc)
 % Real MATLAB export followed by Python import and the existing state pipeline.
 folder = tempname;
-cleanup = onCleanup(@() cleanupHandoff(folder));
+previousPath = path;
+cleanup = onCleanup(@() cleanupHandoff(folder,previousPath));
 fixture = py.importlib.import_module('tests.test_matlab_features');
 bridge = py.importlib.import_module('matlab_features');
 data = fixture.make_fixture();
 bridge.prepare(data{1},data{2},data{3},2.1,folder);
+addpath(folder);
 export_weida_features(folder);
 fixture.check_export(folder,'MATLAB');
 tc.verifyTrue(isfile(fullfile(folder,'features.mat')));
 end
 
-function cleanupHandoff(folder)
+function cleanupHandoff(folder,previousPath)
+path(previousPath);
 if isfolder(folder); rmdir(folder,'s'); end
 end
