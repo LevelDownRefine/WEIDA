@@ -1,4 +1,4 @@
-"""Generate synthetic fixtures, run portable Octave, and report stage errors."""
+"""Generate shared fixtures and compare MATLAB/Octave with production Python."""
 import os
 
 os.environ.setdefault('OMP_NUM_THREADS','1')
@@ -14,11 +14,12 @@ import numpy as np
 import scipy
 import sklearn
 from scipy.io import loadmat, savemat
-from scipy.signal import butter, detrend, filtfilt, hilbert
+from scipy.signal import butter, hilbert
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from preprocessing import preprocess_bold
 from weida import (
     analyze_state_occupancy,
     calculate_state_dynamics,
@@ -32,6 +33,7 @@ def main():
     parser.add_argument('--prepare-only',action='store_true',help='Export a standalone MATLAB/Octave handoff')
     parser.add_argument('--compare-only',action='store_true',help='Compare returned reference.mat without an M runtime')
     parser.add_argument('--output',default='validation_output')
+    parser.add_argument('--strict-signal',action='store_true',help='Require filtered signals, phases and canonical end-to-end features to match')
     args=parser.parse_args()
     if sum([bool(args.octave),args.prepare_only,args.compare_only]) != 1:
         parser.error('Choose exactly one of --octave, --prepare-only, --compare-only')
@@ -41,8 +43,7 @@ def main():
     offsets=rng.uniform(-np.pi,np.pi,(78,1))
     bold=np.sin(2*np.pi*.055*time+offsets)+.3*np.sin(2*np.pi*.025*time+offsets)+.15*rng.normal(size=(78,210))
     b,a=butter(2,[.04,.07],btype='bandpass',fs=1/tr)
-    ts=detrend(bold,axis=1); ts-=ts.mean(axis=1,keepdims=True)
-    filtered=filtfilt(b,a,ts,axis=1,padlen=3*(max(len(a),len(b))-1))
+    filtered=preprocess_bold(bold,tr=tr)
     phase=np.angle(hilbert(filtered,axis=1))
     # Four well-separated clusters: matching initial centers, not just RNG seeds.
     initial=np.eye(4)*8
@@ -50,7 +51,7 @@ def main():
     sequences=[np.array([0,0,1,1,0,2,2,3,3,0]),np.array([2,2,2,2]),np.array([1,0,1,0,1,3,3]),np.array([3,3,0,0,2,1,1,0])]
     labels=np.concatenate(sequences); lengths=np.array(list(map(len,sequences))); conditions=np.array([1,1,2,2])
     if not args.compare_only:
-        savemat(out/'input.mat',{'bold': bold,'tr': tr,'shared_phase': phase,'cluster_input': cluster_input,'initial_centers': initial,'labels': (labels+1)[:,None],'lengths': lengths[:,None],'conditions': conditions[:,None]})
+        savemat(out/'input.mat',{'bold': bold,'tr': tr,'shared_phase': phase,'shared_filtered': filtered,'cluster_input': cluster_input,'initial_centers': initial,'labels': (labels+1)[:,None],'lengths': lengths[:,None],'conditions': conditions[:,None]})
         for name in ['reference.m','run_reference.m','HANDOFF.md']:
             (out/name).write_bytes(Path(__file__).with_name(name).read_bytes())
         manifest={name:hashlib.sha256((out/name).read_bytes()).hexdigest() for name in ['input.mat','reference.m','run_reference.m']}
@@ -73,8 +74,10 @@ def main():
     cluster_input=fixture['cluster_input']; initial=fixture['initial_centers']
     labels=fixture['labels'].astype(int)-1; lengths=fixture['lengths'].astype(int); conditions=fixture['conditions'].astype(int)
     b,a=butter(2,[.04,.07],btype='bandpass',fs=1/tr)
-    ts=detrend(bold,axis=1); ts-=ts.mean(axis=1,keepdims=True)
-    filtered=filtfilt(b,a,ts,axis=1,padlen=3*(max(len(a),len(b))-1))
+    filtered=preprocess_bold(bold,tr=tr)
+    # Older handoff packages did not include shared_filtered.
+    shared_features,_=compute_weighted_eigenvectors([fixture.get('shared_filtered',filtered)],tr,preprocessed=True)
+    phase=np.angle(hilbert(filtered,axis=1))
     ref=loadmat(out/'reference.mat',squeeze_me=True)
     checks={}
     def check(name,left,right,tolerance=1e-9,required=True):
@@ -84,11 +87,11 @@ def main():
         error=float(np.max(np.abs(left[np.isfinite(left)&np.isfinite(right)]-right[np.isfinite(left)&np.isfinite(right)]),initial=0))
         checks[name]={'max_absolute_error': error,'tolerance': tolerance,'passed': bool(np.allclose(left,right,atol=tolerance,rtol=0,equal_nan=True)),'required': required}
     check('filter_b',b,ref['b']); check('filter_a',a,ref['a'])
-    check('filtered',filtered,ref['filtered'],1e-8,False)
-    check('circular_phase',np.angle(np.exp(1j*(phase-ref['phase']))),np.zeros_like(phase),1e-8,False)
+    check('filtered',filtered,ref['filtered'],1e-8,args.strict_signal)
+    check('circular_phase',np.angle(np.exp(1j*(phase-ref['phase']))),np.zeros_like(phase),1e-8,args.strict_signal)
     features,_=compute_weighted_eigenvectors([bold],tr)
-    check('canonical_features_shared_phase',features,ref['shared_features'],1e-8)
-    check('canonical_features_end_to_end',features,ref['canonical_features'],1e-8,False)
+    check('canonical_features_shared_phase',shared_features,ref['shared_features'],1e-8)
+    check('canonical_features_end_to_end',features,ref['canonical_features'],1e-8,args.strict_signal)
     check('original_sign_features_end_to_end',features,ref['native_features'],1e-8,False)
     model=KMeans(n_clusters=4,init=initial,n_init=1,max_iter=500,algorithm='lloyd',random_state=0).fit(cluster_input)
     check('cluster_labels_fixed_start',model.labels_+1,ref['idx'],0)
@@ -103,7 +106,7 @@ def main():
     check('state_order',dynamics['order']+1,ref['order'],0)
     check('scan_transitions',dynamics['transitions'],ref['transitions'])
     check('group_transitions',np.stack([dynamics['group_transitions'][str(i)] for i in [1,2]]),ref['group'])
-    report={'input_sha256': manifest['input.mat'],'runtime': str(ref['runtime_version']),'numpy': np.__version__,'scipy': scipy.__version__,'sklearn': sklearn.__version__,'fixture_seed': 284,'synthetic_only': True,'matlab_equivalence': False,'checks': checks}
+    report={'input_sha256': manifest['input.mat'],'runtime': str(ref['runtime_version']),'numpy': np.__version__,'scipy': scipy.__version__,'sklearn': sklearn.__version__,'fixture_seed': 284,'synthetic_only': True,'matlab_equivalence': False,'strict_signal': args.strict_signal,'checks': checks}
     (out/'report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps(report,indent=2))
     if any(not c['passed'] and c['required'] for c in checks.values()): sys.exit(1)

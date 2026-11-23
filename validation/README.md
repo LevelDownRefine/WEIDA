@@ -8,7 +8,7 @@
 uv run --locked python -m unittest discover -s tests -t . -v
 ```
 
-现有 30 个用例覆盖：完整状态段的持续时间、缺失状态和全程单一状态、扫描边界隔离、按扫描平均的组转移概率、状态排序一致性、非法长度与标签、全零及非有限输入、不同扫描长度、交接包生成和校验。
+单元测试覆盖：完整状态段的持续时间、缺失状态和全程单一状态、扫描边界隔离、按扫描平均的组转移概率、状态排序一致性、非法长度与标签、全零及非有限输入、不同扫描长度、交接包生成和校验。
 
 预期值来自可手算样例；测试不依赖 MATLAB 或 Octave。
 
@@ -39,7 +39,11 @@ Windows 便携环境：Octave 11.3.0、signal 1.4.7、statistics 1.8.3。误差�
 
 ## 4. 持续集成（CI）
 
-GitHub Actions 在 push 和 PR 时分别运行 Python UT 与 Octave 对照。两者使用 uv 锁文件重建环境；Octave 任务安装 Linux 工具包和无窗口绘图后端，失败时也上传中间结果、日志和报告。
+GitHub Actions 在主分支 push 和 PR 时运行 Python UT、Octave 对照和 MATLAB R2025b 测试。两者使用 uv 锁文件重建环境；Octave 任务安装 Linux 工具包和无窗口绘图后端，失败时也上传中间结果、日志和报告。
+
+MATLAB 任务在已有 Python 调用测试之后，复用交接包运行独立的 `reference.m`（需要 Signal Processing Toolbox 和 Statistics and Machine Learning Toolbox），再由 Python 读取 `reference.mat` 对照生产函数。预处理直接调用 `preprocessing.py`，不在比较器中另写一份滤波实现。
+
+MATLAB CI 使用 `--strict-signal`，将滤波信号、相位和统一符号后的端到端特征误差也设为必需检查（绝对容差 1e-8）；原符号特征向量差异仍单独报告。聚类采用共享固定初始中心，状态统计采用预设标签，不能据此推断随机聚类或论文全部结果等价。输入、参考脚本、日志和逐项误差报告作为 `matlab-reference-report` 上传。
 
 CI 绿色仅表示必需检查通过，不能掩盖报告中的原符号差异。Linux 与 Windows 的 Octave 版本可能不同，因此日志会记录运行环境。
 

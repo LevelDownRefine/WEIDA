@@ -1,4 +1,4 @@
-name: MATLAB 调用 Python 单元测试
+name: MATLAB 测试与数值对照
 on:
   push:
     branches: [main]
@@ -9,6 +9,9 @@ permissions:
 jobs:
   matlab-unit:
     runs-on: ubuntu-24.04
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +22,20 @@ jobs:
       - uses: matlab-actions/setup-matlab@v3
         with:
           release: R2025b
+          products: Signal_Processing_Toolbox Statistics_and_Machine_Learning_Toolbox
       - uses: matlab-actions/run-command@v3
         with:
           command: results = runtests('tests/matlab'); disp(table(results)); assertSuccess(results)
+      - name: Prepare shared synthetic input
+        run: uv run --locked python validation/compare.py --prepare-only --output validation_output/matlab
+      - name: Run independent MATLAB reference
+        uses: matlab-actions/run-command@v3
+        with:
+          command: addpath(fullfile(pwd,'validation_output','matlab')); run_reference
+      - name: Compare MATLAB with Python
+        run: uv run --locked python validation/compare.py --compare-only --strict-signal --output validation_output/matlab
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matlab-reference-report
+          path: validation_output/matlab/
