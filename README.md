@@ -11,14 +11,18 @@
 
 ## 环境与运行
 
-新增薄入口 `run_study.py`，仅选择并调用已有脚本。PhiID 仓库无需修改，使用自己的 uv 环境和锁文件：
+`run_study.py` 共用数据读取、幅度预处理和适用的后处理，仅通过 `--method` 切换 WEiDA / 官方 PhiID 计算：
 
 ```bash
-uv run --locked python run_study.py --method weida /path/to/input output/weida -- --tr 2.1 --exclude-stn 18
-uv run --locked python run_study.py --method phiid --phiid-repo /path/to/PhiID /path/to/input output/phiid -- --preprocessing weida_amplitude --tr 2.1 --exclude-stn 18
+uv run --locked python run_study.py /path/to/input output/weida --method weida --tr 2.1 --exclude-stn 18
+uv run --locked python run_study.py /path/to/input output/phiid --method phiid --tr 2.1 --exclude-stn 18
 ```
 
-`--` 后的参数原样交给对应脚本验证。WEiDA 调用 `run_weida.py`，后续统计与作图仍按本文的 `run_features.py` / `plot_results.py` 执行；PhiID 调用其 `scripts/run_study.py` 完整流程。此处只统一启动，不统一两边的统计、预处理选项或输出结构，也不新增 PhiID 实现。输入路径和输出路径会转为绝对路径；已有输出目录拒绝覆盖。
+两种方法在同一进程中接收完全相同的预处理后数组。默认共用去线性趋势、去均值和 0.04–0.07 Hz 滤波；`--preprocessing loaded` 对两种方法都保留输入幅度。WEiDA 接着提取相位，不重复滤波；PhiID 调用锁定版本的官方 `phyid.calculate.calc_PhiID`，本仓库不实现分解公式。WEiDA 参数为 `--k/--seed/--replicates`，PhiID 参数为 `--lag`。
+
+后处理按适用性共用：扫描 × 指标表调用现有配对/独立样本 t 检验及每个对比、每个指标族的有限 p 值 BH 校正；组分布、患者配对变化图共用同一函数。WEiDA 的状态占比、持续时间、转移概率与离散度仍保留各自含义。PhiID 当前汇总指标是纳入两个端点方向的 16 分量全连接均值，**不是逐边、子网络或整图检验**；原始完整矩阵也会保存。
+
+输出 `results.npz` 保留方法原生结果，`features.npz` / `statistics.json` 保存通用指标及比较，`metadata.json` 记录方法、参数、单位和扫描顺序。状态空间图、连接图及临床/模块指标不强制统一；原 WEiDA 入口和作图工具仍可单独使用。新入口沿用 WEIDA 的 BH 规则，与 PhiID 仓库旧独立入口对无效检验槽位的处理存在区别，不能混用两者的 q 值。已有输出目录拒绝覆盖。
 
 使用 uv 管理独立环境。Python 固定为 3.11.14，依赖声明在 `pyproject.toml`，具体版本锁定在 `uv.lock`，本地环境位于 `.venv`。
 

@@ -179,6 +179,15 @@ wheels = [
 ]
 
 [[package]]
+name = "phyid"
+version = "0+untagged.8.g6c5f2e9"
+source = { git = "https://github.com/Imperial-MIND-lab/integrated-info-decomp.git?rev=6c5f2e9d33c985efbdf875d45cb5a2a6a5cdbf44#6c5f2e9d33c985efbdf875d45cb5a2a6a5cdbf44" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[[package]]
 name = "pillow"
 version = "13.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -288,6 +297,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
+    { name = "phyid" },
     { name = "scikit-learn" },
     { name = "scipy" },
 ]
@@ -296,6 +306,7 @@ dependencies = [
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "phyid", git = "https://github.com/Imperial-MIND-lab/integrated-info-decomp.git?rev=6c5f2e9d33c985efbdf875d45cb5a2a6a5cdbf44" },
     { name = "scikit-learn", specifier = ">=1.4" },
     { name = "scipy", specifier = ">=1.11" },
 ]
