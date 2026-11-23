@@ -1,4 +1,5 @@
 """MATLAB feature handoff validation; shared fixtures also run in real MATLAB CI."""
+import csv
 import json
 import tempfile
 import unittest
@@ -14,11 +15,11 @@ from preprocessing import preprocess_bold
 
 def make_fixture():
     rng = np.random.default_rng(753)
-    scans = [rng.normal(size=(8, n)) for n in (40, 50, 45)]
+    scans = [rng.normal(size=(78, n)) for n in (40, 50, 45)]
     metadata = [{'subject': subject, 'condition': condition, 'frames': x.shape[1]}
                 for subject, condition, x in zip(
                     ['sub-HC01', 'sub-STNoff01', 'sub-STNon01'], ['HC', 'OFF', 'ON'], scans)]
-    return scans, metadata, [f'ROI{i}' for i in range(8)]
+    return scans, metadata, [f'ROI{i}' for i in range(78)]
 
 
 def check_export(folder, engine):
@@ -30,9 +31,17 @@ def check_export(folder, engine):
     path = root / 'features.mat'
     vectors, lengths, source = load_features(path, scans, metadata, regions, 2.1)
     assert source['engine'] == engine and source['version']
-    with (patch('run_weida.load_scans', return_value=(scans, metadata, regions)),
-          patch('run_weida.compute_weighted_eigenvectors', side_effect=AssertionError('Recomputed imported features')),
-          patch('sys.argv', ['run_weida.py', 'fixture', str(root / 'result'),
+    input_root = root / 'input'
+    for scan, record in zip(scans, metadata):
+        directory = input_root / record['subject']
+        directory.mkdir(parents=True)
+        with (directory / 'fixture_BOLD_AAL1ctx.csv').open('w', newline='') as handle:
+            writer = csv.writer(handle)
+            writer.writerow([''] + regions)
+            for i, row in enumerate(scan.T):
+                writer.writerow([i] + row.tolist())
+    with (patch('run_weida.compute_weighted_eigenvectors', side_effect=AssertionError('Recomputed imported features')),
+          patch('sys.argv', ['run_weida.py', str(input_root), str(root / 'result'),
                              '--matlab-features', str(path), '--replicates', '2'])):
         main()
     with np.load(root / 'result' / 'results.npz') as result:
@@ -53,7 +62,7 @@ class MatlabFeatureTests(unittest.TestCase):
         self.scans, self.metadata, self.regions = make_fixture()
         prepare(self.scans, self.metadata, self.regions, 2.1, self.folder)
         self.data = {
-            'vectors': np.random.default_rng(35).normal(size=(135, 8)),
+            'vectors': np.random.default_rng(35).normal(size=(135, 78)),
             'lengths': [40, 50, 45], 'tr': 2.1,
             'subjects': np.asarray([m['subject'] for m in self.metadata], dtype=object),
             'regions': np.asarray(self.regions, dtype=object),
@@ -77,7 +86,7 @@ class MatlabFeatureTests(unittest.TestCase):
         path = self.folder / 'features.mat'
         corruptions = {'input_signature': 'wrong', 'subjects': self.data['subjects'][::-1],
                        'regions': self.data['regions'][::-1], 'lengths': [40, 49, 46], 'tr': 2.,
-                       'vectors': np.full((135, 8), np.nan), 'runtime_engine': 'unknown'}
+                       'vectors': np.full((135, 78), np.nan), 'runtime_engine': 'unknown'}
         for key, value in corruptions.items():
             with self.subTest(key=key):
                 savemat(path, {**self.data, key: value})
