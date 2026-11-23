@@ -1,8 +1,19 @@
 """从已有模型结果计算状态离散度、功能分离度及 STN 配对统计。"""
-import argparse,csv,json
+import argparse
+import csv
+import json
 from pathlib import Path
+
 import numpy as np
-from downstream import state_metastability,functional_segregation,paired_comparison,predict_states,independent_comparison
+
+from downstream import (
+    functional_segregation,
+    independent_comparison,
+    paired_comparison,
+    predict_states,
+    state_metastability,
+)
+
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)

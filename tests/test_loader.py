@@ -3,10 +3,13 @@ import csv
 import json
 import tempfile
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
+
 import numpy as np
+
 from run_weida import load_scans
+
 
 class LoaderTests(unittest.TestCase):
     def setUp(self):
@@ -53,7 +56,7 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual([m['subject'] for m in meta],['sub-HC01'])
 
     def test_downstream_reloads_headerless_series_and_checks_frame_count(self):
-        from downstream import predict_states, functional_segregation
+        from downstream import functional_segregation, predict_states
         from run_features import main
         rng = np.random.default_rng(42)
         centers = np.array([[1, 1, -1, -1], [-1, -1, 1, 1.]])
@@ -67,10 +70,10 @@ class LoaderTests(unittest.TestCase):
                 path = folder / 'tseries.csv'
                 np.savetxt(path, x, delimiter=',')
                 scans.append(x)
-                metadata.append(dict(subject=subject, condition=condition, file=str(path), frames=30))
+                metadata.append({'subject': subject, 'condition': condition, 'file': str(path), 'frames': 30})
         model = self.root / 'model'
         model.mkdir()
-        info = dict(scans=metadata, regions=['A', 'B', 'C', 'D'], tr=2.1)
+        info = {'scans': metadata, 'regions': ['A', 'B', 'C', 'D'], 'tr': 2.1}
         (model / 'metadata.json').write_text(json.dumps(info))
         vectors = rng.normal(size=(270, 4))
         lengths = np.full(9, 30)
@@ -86,9 +89,9 @@ class LoaderTests(unittest.TestCase):
                 [[x['within'], x['across'], x['segregation']] for x in expected])
         metadata[0]['frames'] = 31
         (model / 'metadata.json').write_text(json.dumps(info))
-        with patch('sys.argv', ['run_features.py', str(model), '--output', str(self.root / 'invalid')]):
-            with self.assertRaisesRegex(ValueError, 'BOLD'):
-                main()
+        with (patch('sys.argv', ['run_features.py', str(model), '--output', str(self.root / 'invalid')]),
+              self.assertRaisesRegex(ValueError, 'BOLD')):
+            main()
 
     def test_pairs_match_ids_not_only_counts(self):
         self.write_scan('sub-STNon01'); self.write_scan('sub-STNoff02')

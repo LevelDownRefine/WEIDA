@@ -1,7 +1,16 @@
 """下游模块的手算与不变性测试。"""
 import unittest
+
 import numpy as np
-from downstream import predict_states,state_metastability,functional_segregation,paired_comparison,independent_comparison
+
+from downstream import (
+    functional_segregation,
+    independent_comparison,
+    paired_comparison,
+    predict_states,
+    state_metastability,
+)
+
 
 class DownstreamTests(unittest.TestCase):
     def test_prediction_preserves_center_order_and_tie_first(self):

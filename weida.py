@@ -58,9 +58,9 @@ def cluster_brain_states(vectors, k=4, random_state=0, replicates=300):
     distances = model.transform(vectors)**2
     labels = model.labels_
     silhouette = silhouette_samples(vectors,labels,metric='sqeuclidean')
-    return dict(labels=labels,centers=model.cluster_centers_,distances=distances,
-                sumd=np.bincount(labels,weights=distances[np.arange(len(labels)),labels],minlength=k),
-                silhouette=silhouette,silhouette_mean=float(silhouette.mean()))
+    return {'labels': labels,'centers': model.cluster_centers_,'distances': distances,
+                'sumd': np.bincount(labels,weights=distances[np.arange(len(labels)),labels],minlength=k),
+                'silhouette': silhouette,'silhouette_mean': float(silhouette.mean())}
 
 
 def _sequences(labels,lengths,k):
@@ -108,4 +108,4 @@ def calculate_state_dynamics(labels,centers,lengths,occupancy,lifetime,condition
     for condition in np.unique(conditions):
         selected=conditions==condition; count=valid[selected].sum(axis=0)
         group[str(condition)]=np.divide(transitions[selected].sum(axis=0),count[:,None],out=np.full((k,k),np.nan),where=count[:,None]>0)
-    return dict(centers=np.asarray(centers)[order],occupancy=occupancy[:,order],lifetime=lifetime[:,order],states=remap[labels],transitions=transitions,group_transitions=group,order=order,transition_valid=valid)
+    return {'centers': np.asarray(centers)[order],'occupancy': occupancy[:,order],'lifetime': lifetime[:,order],'states': remap[labels],'transitions': transitions,'group_transitions': group,'order': order,'transition_valid': valid}
