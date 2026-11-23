@@ -1,6 +1,9 @@
 import unittest
+
 import numpy as np
+
 from weida import *
+
 
 class WorkflowTests(unittest.TestCase):
     def test_boundary_dwell(self):
@@ -16,6 +19,7 @@ class WorkflowTests(unittest.TestCase):
     def test_variable_lengths_and_rejection(self):
         x=np.random.default_rng(5).normal(size=(8,30))
         v,l=compute_weighted_eigenvectors([x,x[:,:25]])
+        np.testing.assert_array_equal(l,[30,25])
         self.assertEqual(v.shape,(55,8))
         with self.assertRaises(ValueError): compute_weighted_eigenvectors([np.zeros((8,30))])
         c=cluster_brain_states(v,replicates=2)
@@ -48,8 +52,8 @@ class StateMetricsContractTests(unittest.TestCase):
 
     def test_invalid_lengths_and_labels(self):
         for labels,lengths in [(np.array([0,1]),[3]),(np.array([0,4]),[2]),(np.array([0,1]),[0,2]),(np.array([0.,1.]),[2])]:
-            with self.subTest(labels=labels,lengths=lengths):
-                with self.assertRaises(ValueError): analyze_state_occupancy(labels,lengths)
+            with self.subTest(labels=labels,lengths=lengths), self.assertRaises(ValueError):
+                analyze_state_occupancy(labels,lengths)
 
     def test_missing_and_nonfinite_regions_rejected(self):
         for x in [np.zeros((78,20)),np.full((78,20),np.nan),np.zeros((78,0))]:

@@ -1,7 +1,15 @@
 """用解析解和手算预期值检验数值行为，而不是复制实现。"""
 import unittest
+
 import numpy as np
-from weida import compute_weighted_eigenvectors, cluster_brain_states, analyze_state_occupancy, calculate_state_dynamics
+
+from weida import (
+    analyze_state_occupancy,
+    calculate_state_dynamics,
+    cluster_brain_states,
+    compute_weighted_eigenvectors,
+)
+
 
 class NumericalOracleTests(unittest.TestCase):
     def test_identical_signals_have_known_rank_one_features(self):
