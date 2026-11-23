@@ -30,6 +30,20 @@ class LoaderTests(unittest.TestCase):
         self.assertEqual(meta[0]['condition'],'HC')
         self.assertEqual(names,self.names)
 
+    def test_pyleida_input_matches_fmripost_including_first_frame(self):
+        _, values = self.write_scan('sub-HC01')
+        expected, _, labels = load_scans(self.root)
+        root = self.root / 'input'
+        folder = root / 'time_series' / 'sub-HC01'
+        folder.mkdir(parents=True)
+        (root / 'rois_labels.txt').write_text('\n'.join(labels))
+        (root / 'metadata.csv').write_text('subject_id,condition\nsub-HC01,HC\n')
+        np.savetxt(folder / 'tseries.csv', values.T, delimiter=',')
+        scans, meta, names = load_scans(root)
+        np.testing.assert_array_equal(scans[0], expected[0])
+        self.assertEqual(names, labels)
+        self.assertEqual(meta[0]['frames'], 3)
+
     def test_explicit_exclusion_removes_both_scans_and_ignores_gpi(self):
         for subject in ['sub-HC01','sub-STNon18','sub-STNoff18','sub-GPIon01']:
             self.write_scan(subject)
