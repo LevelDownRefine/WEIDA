@@ -3,12 +3,14 @@
 This implements the equations, not bitwise MATLAB eigs/kmeans equivalence.
 """
 import numpy as np
-from scipy.signal import butter, detrend, filtfilt, hilbert
+from scipy.signal import hilbert
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples
 
+from preprocessing import preprocess_bold
 
-def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07)):
+
+def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07), *, preprocessed=False):
     """Stage 1. Return frame x region features and per-scan lengths.
 
     Use six largest-magnitude eigenpairs. Canonicalize EACH eigenvector by
@@ -16,23 +18,20 @@ def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07)):
     an explicit reproducibility convention absent from the MATLAB original.
     It changes the original solver-dependent convention; validate scientifically.
     MATLAB-style filtfilt padding is 3*(max(len(a),len(b))-1).
+    preprocessed=True accepts amplitudes from the shared preprocessing step.
     """
-    if not np.isfinite(tr) or tr <= 0 or not 0 < band[0] < band[1] < .5/tr:
+    if not np.isfinite(tr) or tr <= 0 or (not preprocessed and not 0 < band[0] < band[1] < .5/tr):
         raise ValueError('Invalid TR or bandpass')
-    b, a = butter(2, band, btype='bandpass', fs=1/tr)
-    padlen = 3*(max(len(a),len(b))-1)
     chunks, lengths, regions = [], [], None
     for scan in scans:
         x = np.asarray(scan, dtype=float)
         if x.ndim != 2 or min(x.shape) == 0 or not np.isfinite(x).all():
             raise ValueError('Expected nonempty finite region x time array')
-        if np.any(np.ptp(x, axis=1)==0) or x.shape[1] <= padlen:
-            raise ValueError('Constant region or insufficient time points')
         if regions is not None and regions != x.shape[0]:
             raise ValueError('Inconsistent region counts')
         regions = x.shape[0]
-        ts = detrend(x, axis=1); ts -= ts.mean(axis=1, keepdims=True)
-        phase = np.angle(hilbert(filtfilt(b,a,ts,axis=1,padlen=padlen),axis=1))
+        ts = x if preprocessed else preprocess_bold(x, tr=tr, band=band)
+        phase = np.angle(hilbert(ts, axis=1))
         chunk = []
         for phi in phase.T:
             values, vectors = np.linalg.eigh(np.cos(phi[:,None]-phi[None,:]))
