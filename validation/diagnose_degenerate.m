@@ -26,6 +26,7 @@ for k=1:numel(indices)
         [W,E,otherflag]=eigs(B,6,'largestabs','StartVector',z);
         actual=feature(W,E);
         row.group=names{k}; row.variant=variants{j};
+        row.runtime=version;
         row.matrix_max_change=max(abs(B(:)-A(:)));
         row.start_max_change=max(abs(z-start));
         row.feature_max_change=max(abs(actual-baseline));
@@ -36,7 +37,11 @@ for k=1:numel(indices)
         row.baseline_eigenpair_residual=max(max(abs(A*V-V*D)));
         row.changed_eigenpair_residual=max(max(abs(B*W-W*E)));
         row.converged=(flag==0 && otherflag==0);
-        rows(end+1)=row;
+        if isempty(rows)
+            rows=row;
+        else
+            rows(end+1)=row;
+        end
     end
 end
 fid=fopen(fullfile(folder,'degenerate_sensitivity.json'),'w');
