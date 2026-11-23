@@ -67,10 +67,17 @@ eigs(squeeze(matrices(1,:,:)));
 info = profile('info'); profile off;
 profile_names = {info.FunctionTable.FunctionName};
 runtime_version = version;
+% Public numerical RNG observations for an independent initialization port.
+stream=RandStream('dsfmt19937','Seed',0,'NormalTransform','Ziggurat');
+rng_fixture.initial_state=stream.State;
+rng_fixture.uniform=rand(stream,2048,1);
+stream=RandStream('dsfmt19937','Seed',0,'NormalTransform','Ziggurat');
+rng_fixture.normal=randn(stream,2048,1);
+rng_fixture.normal_state=stream.State;
 save(fullfile(folder,'eigs_diagnosis.mat'),'matrices','native_values','native_vectors', ...
     'repeat_values','repeat_vectors','seed_values','seed_vectors','handle_values', ...
     'handle_vectors','start_values','start_vectors','operator_inputs','flags', ...
-    'profile_names','runtime_version','stream_trials','case_groups','-v7');
+    'profile_names','runtime_version','stream_trials','case_groups','rng_fixture','-v7');
 end
 
 function [V,D,inputs,flag] = tracedEigs(A)
