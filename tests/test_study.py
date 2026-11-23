@@ -9,7 +9,8 @@ import numpy as np
 from phyid.calculate import calc_PhiID
 
 import run_study
-from weida import compute_weighted_eigenvectors, preprocess_bold
+from preprocessing import preprocess_bold
+from weida import compute_weighted_eigenvectors
 
 
 class StudyTests(unittest.TestCase):

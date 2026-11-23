@@ -6,13 +6,13 @@ from pathlib import Path
 import numpy as np
 
 from downstream import independent_comparison, paired_comparison, state_metastability
+from preprocessing import preprocess_bold
 from run_weida import load_scans
 from weida import (
     analyze_state_occupancy,
     calculate_state_dynamics,
     cluster_brain_states,
     compute_weighted_eigenvectors,
-    preprocess_bold,
 )
 
 
