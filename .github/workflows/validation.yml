@@ -20,6 +20,8 @@ jobs:
           version: '0.11.28'
           enable-cache: true
       - run: uv sync --locked
+      - name: Ruff
+        run: uvx ruff==0.17.6 check .
       - run: uv run --locked python -m unittest discover -s tests -t . -v
   octave-reference:
     name: Octave 跨语言对照

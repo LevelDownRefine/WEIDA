@@ -1,22 +1,29 @@
 """Generate synthetic fixtures, run portable Octave, and report stage errors."""
 import os
+
 os.environ.setdefault('OMP_NUM_THREADS','1')
 os.environ.setdefault('OPENBLAS_NUM_THREADS','1')
 import argparse
-import json
 import hashlib
-from pathlib import Path
+import json
 import subprocess
 import sys
+from pathlib import Path
+
 import numpy as np
 import scipy
 import sklearn
-from scipy.io import savemat, loadmat
+from scipy.io import loadmat, savemat
 from scipy.signal import butter, detrend, filtfilt, hilbert
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples
+
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from weida import compute_weighted_eigenvectors, analyze_state_occupancy, calculate_state_dynamics
+from weida import (
+    analyze_state_occupancy,
+    calculate_state_dynamics,
+    compute_weighted_eigenvectors,
+)
 
 
 def main():
@@ -43,7 +50,7 @@ def main():
     sequences=[np.array([0,0,1,1,0,2,2,3,3,0]),np.array([2,2,2,2]),np.array([1,0,1,0,1,3,3]),np.array([3,3,0,0,2,1,1,0])]
     labels=np.concatenate(sequences); lengths=np.array(list(map(len,sequences))); conditions=np.array([1,1,2,2])
     if not args.compare_only:
-        savemat(out/'input.mat',dict(bold=bold,tr=tr,shared_phase=phase,cluster_input=cluster_input,initial_centers=initial,labels=(labels+1)[:,None],lengths=lengths[:,None],conditions=conditions[:,None]))
+        savemat(out/'input.mat',{'bold': bold,'tr': tr,'shared_phase': phase,'cluster_input': cluster_input,'initial_centers': initial,'labels': (labels+1)[:,None],'lengths': lengths[:,None],'conditions': conditions[:,None]})
         for name in ['reference.m','run_reference.m','HANDOFF.md']:
             (out/name).write_bytes(Path(__file__).with_name(name).read_bytes())
         manifest={name:hashlib.sha256((out/name).read_bytes()).hexdigest() for name in ['input.mat','reference.m','run_reference.m']}
@@ -55,7 +62,7 @@ def main():
     if args.prepare_only:
         print(f'Handoff ready: {out}'); return
     if args.octave:
-        completed=subprocess.run([str(Path(args.octave).resolve()),'--no-gui','--quiet','--eval','run_reference'],cwd=out,capture_output=True,text=True)
+        completed=subprocess.run([str(Path(args.octave).resolve()),'--no-gui','--quiet','--eval','run_reference'],cwd=out,capture_output=True,text=True,check=False)
         (out/'octave.log').write_text(completed.stdout+'\n'+completed.stderr,encoding='utf-8')
         if completed.returncode:
             print(completed.stdout, file=sys.stderr); print(completed.stderr, file=sys.stderr)
@@ -73,9 +80,9 @@ def main():
     def check(name,left,right,tolerance=1e-9,required=True):
         left,right=np.asarray(left),np.asarray(right)
         if left.shape != right.shape:
-            checks[name]=dict(passed=False,required=required,error=f'Shape mismatch: {left.shape} vs {right.shape}'); return
+            checks[name]={'passed': False,'required': required,'error': f'Shape mismatch: {left.shape} vs {right.shape}'}; return
         error=float(np.max(np.abs(left[np.isfinite(left)&np.isfinite(right)]-right[np.isfinite(left)&np.isfinite(right)]),initial=0))
-        checks[name]=dict(max_absolute_error=error,tolerance=tolerance,passed=bool(np.allclose(left,right,atol=tolerance,rtol=0,equal_nan=True)),required=required)
+        checks[name]={'max_absolute_error': error,'tolerance': tolerance,'passed': bool(np.allclose(left,right,atol=tolerance,rtol=0,equal_nan=True)),'required': required}
     check('filter_b',b,ref['b']); check('filter_a',a,ref['a'])
     check('filtered',filtered,ref['filtered'],1e-8,False)
     check('circular_phase',np.angle(np.exp(1j*(phase-ref['phase']))),np.zeros_like(phase),1e-8,False)
@@ -96,7 +103,7 @@ def main():
     check('state_order',dynamics['order']+1,ref['order'],0)
     check('scan_transitions',dynamics['transitions'],ref['transitions'])
     check('group_transitions',np.stack([dynamics['group_transitions'][str(i)] for i in [1,2]]),ref['group'])
-    report=dict(input_sha256=manifest['input.mat'],runtime=str(ref['runtime_version']),numpy=np.__version__,scipy=scipy.__version__,sklearn=sklearn.__version__,fixture_seed=284,synthetic_only=True,matlab_equivalence=False,checks=checks)
+    report={'input_sha256': manifest['input.mat'],'runtime': str(ref['runtime_version']),'numpy': np.__version__,'scipy': scipy.__version__,'sklearn': sklearn.__version__,'fixture_seed': 284,'synthetic_only': True,'matlab_equivalence': False,'checks': checks}
     (out/'report.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps(report,indent=2))
     if any(not c['passed'] and c['required'] for c in checks.values()): sys.exit(1)

@@ -3,8 +3,15 @@ import argparse
 import csv
 import json
 from pathlib import Path
+
 import numpy as np
-from weida import compute_weighted_eigenvectors, cluster_brain_states, analyze_state_occupancy, calculate_state_dynamics
+
+from weida import (
+    analyze_state_occupancy,
+    calculate_state_dynamics,
+    cluster_brain_states,
+    compute_weighted_eigenvectors,
+)
 
 
 def load_scans(root, exclude_stn=()):

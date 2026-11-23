@@ -1,7 +1,8 @@
 """下游分析：固定中心预测、状态离散度、功能分离度及配对统计。"""
 import numpy as np
-from scipy.stats import ttest_rel, false_discovery_control
-from weida import compute_weighted_eigenvectors, analyze_state_occupancy, _sequences
+from scipy.stats import false_discovery_control, ttest_rel
+
+from weida import _sequences, analyze_state_occupancy, compute_weighted_eigenvectors
 
 
 def predict_states(vectors, centers, lengths, tr=2.1):
@@ -20,7 +21,7 @@ def predict_states(vectors, centers, lengths, tr=2.1):
         np.add.at(transition[i],(seq[:-1],seq[1:]),1)
         totals=transition[i].sum(axis=1,keepdims=True)
         np.divide(transition[i],totals,out=transition[i],where=totals>0)
-    return dict(states=labels,occupancy=p,lifetime=lt,transitions=transition)
+    return {'states': labels,'occupancy': p,'lifetime': lt,'transitions': transition}
 
 
 def predict_bold(scans,centers,tr=2.1):
@@ -69,7 +70,7 @@ def functional_segregation(scan,center,clip=1e-7):
     for i in range(len(c)):
         inside=same[i].copy(); inside[i]=False
         nodal[i]=z[i,inside].mean()-z[i,~same[i]].mean()
-    return dict(within=within,across=across,segregation=within-across,nodal=nodal,clipped_edges=clipped)
+    return {'within': within,'across': across,'segregation': within-across,'nodal': nodal,'clipped_edges': clipped}
 
 
 def paired_comparison(values,subject_ids,conditions,before='OFF',after='ON'):
