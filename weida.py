@@ -13,10 +13,10 @@ from preprocessing import preprocess_bold
 def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07), *, preprocessed=False):
     """Stage 1. Return frame x region features and per-scan lengths.
 
-    Use six largest-magnitude eigenpairs. Canonicalize EACH eigenvector by
-    making its largest absolute component positive before weighting. This is
-    an explicit reproducibility convention absent from the MATLAB original.
-    It changes the original solver-dependent convention; validate scientifically.
+    Use six largest-magnitude eigenpairs, preserving their solver-returned signs.
+    As in the original script, adjust only the final weighted vector sign.
+    NumPy eigh and MATLAB eigs can return different eigenvector signs;
+    cross-runtime equality is not established.
     MATLAB-style filtfilt padding is 3*(max(len(a),len(b))-1).
     preprocessed=True accepts amplitudes from the shared preprocessing step.
     """
@@ -37,8 +37,6 @@ def compute_weighted_eigenvectors(scans, tr=2.1, band=(0.04, 0.07), *, preproces
             values, vectors = np.linalg.eigh(np.cos(phi[:,None]-phi[None,:]))
             idx = np.argsort(np.abs(values))[-min(6,regions):][::-1]
             values, vectors = values[idx], vectors[:,idx]
-            anchors = vectors[np.argmax(np.abs(vectors),axis=0),np.arange(len(idx))]
-            vectors *= np.where(anchors < 0,-1.,1.)
             v = vectors @ values / values.sum()
             positive = np.mean(v > 0)
             if positive > .5 or (positive == .5 and v[v>0].sum() > -v[v<0].sum()): v = -v

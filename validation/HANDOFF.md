@@ -10,7 +10,7 @@
 
 命令行也可使用 `matlab -batch "run_reference"`。Octave 使用 `octave --no-gui --quiet --eval "run_reference"`，需 signal/statistics 包。
 
-本任务是独立四阶段参考实现的对照，不是运行整份原始论文脚本。MATLAB 内置函数的原始特征向量符号结果与统一符号后的结果会分别导出；不要求前者与 Python 完全一致。
+本任务是独立四阶段参考实现的对照，不是运行整份原始论文脚本。保留 MATLAB 求解器返回的特征向量符号，仅按原脚本调整加权后总向量符号；原始特征结果与 Python 的对照为必需检查。
 
 接收方在 Python 仓库运行：
 
