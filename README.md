@@ -33,6 +33,25 @@ CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执�
 
 滤波显式使用延拓长度 `3*(max(len(a),len(b))-1)`，但尚未验证所有 MATLAB 版本的边界行为。不同库的 K-means 初始化也不同，比较结果应先匹配状态，不能直接比较状态编号。轮廓系数使用平方欧氏距离精确计算，大数据时开销较大。
 
+## 使用 MATLAB 特征继续 Python 分析
+
+纯 Python 特征求解尚未与 MATLAB 对齐时，可以固定 MATLAB 版本生成特征，再复用现有 Python 聚类与状态统计：
+
+```bash
+uv run --locked python matlab_features.py /path/to/input output/matlab_handoff --tr 2.1 --exclude-stn 18
+```
+
+在有 MATLAB 的环境中打开交接目录，运行 `export_weida_features`，生成 `features.mat`。需要 Signal Processing Toolbox；CI 使用 R2025b。
+
+```bash
+uv run --locked python run_weida.py /path/to/input output/matlab_states --tr 2.1 --exclude-stn 18 --matlab-features output/matlab_handoff/features.mat
+```
+
+- 准备交接包时只调用一次共享幅度预处理；MATLAB 仅执行 Hilbert、原生 `eigs`、加权和最终向量定号。
+- 导入时校验原始数据签名、扫描/脑区顺序、帧数及 TR；不再进行 Python 特征求解或重复滤波。
+- 输出格式与原入口相同，元数据记录实际 MATLAB/Octave 运行版本及特征来源。Octave 可演练交接，但不能冒充 MATLAB 基准。
+- 后续聚类仍使用 Python 实现；这一入口不代表随机聚类结果或完整论文结果与原作者一致。
+
 ## 输出文件
 
 - `clustering.npz`：排序前的标签、聚类中心、平方距离、类内距离总和及轮廓系数。

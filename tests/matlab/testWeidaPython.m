@@ -89,3 +89,20 @@ if mean(v>0)>.5 || (mean(v>0)==.5 && sum(v(v>0))>-sum(v(v<0))); v=-v; end
 actual = tc.TestData.model.weight_eigenvectors(array(jsonencode(diag(D))),array(jsonencode(V)));
 tc.verifyEqual(numbers(actual),v,'AbsTol',1e-12);
 end
+
+function testMatlabFeatureHandoff(tc)
+% Real MATLAB export followed by Python import and the existing state pipeline.
+folder = tempname;
+cleanup = onCleanup(@() cleanupHandoff(folder));
+fixture = py.importlib.import_module('tests.test_matlab_features');
+bridge = py.importlib.import_module('matlab_features');
+data = fixture.make_fixture();
+bridge.prepare(data{1},data{2},data{3},2.1,folder);
+export_weida_features(folder);
+fixture.check_export(folder,'MATLAB');
+tc.verifyTrue(isfile(fullfile(folder,'features.mat')));
+end
+
+function cleanupHandoff(folder)
+if isfolder(folder); rmdir(folder,'s'); end
+end

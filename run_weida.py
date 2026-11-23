@@ -72,10 +72,16 @@ def main():
     parser.add_argument('--tr', type=float, default=2.1)
     parser.add_argument('--replicates', type=int, default=300)
     parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--matlab-features', help='Validated features.mat from export_weida_features.m')
     parser.add_argument('--exclude-stn', nargs='*', default=[], help='Explicit paired exclusions, e.g. 18')
     args = parser.parse_args()
     scans, meta, names = load_scans(args.input, args.exclude_stn)
-    vectors, lengths = compute_weighted_eigenvectors(scans, tr=args.tr)
+    if args.matlab_features:
+        from matlab_features import load_features
+        vectors, lengths, feature_source = load_features(args.matlab_features, scans, meta, names, args.tr)
+    else:
+        vectors, lengths = compute_weighted_eigenvectors(scans, tr=args.tr)
+        feature_source = {'engine': 'NumPy eigh', 'version': np.__version__}
     clustering = cluster_brain_states(vectors, random_state=args.seed, replicates=args.replicates)
     labels, centers = clustering['labels'], clustering['centers']
     occupancy, lifetime = analyze_state_occupancy(labels, lengths, tr=args.tr)
@@ -83,7 +89,7 @@ def main():
     out = Path(args.output); out.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out / 'clustering.npz', **clustering)
     np.savez_compressed(out / 'results.npz', vectors=vectors, lengths=lengths, **{k:v for k,v in result.items() if k != 'group_transitions'}, **{'group_'+k:v for k,v in result['group_transitions'].items()})
-    (out / 'metadata.json').write_text(json.dumps({'scans':meta, 'regions':names, 'tr':args.tr, 'seed':args.seed, 'replicates':args.replicates, 'excluded_stn':args.exclude_stn, 'eigenvector_sign':'largest-absolute-component-positive', 'band_hz':[0.04,0.07], 'state_index_base':0}, indent=2), encoding='utf-8')
+    (out / 'metadata.json').write_text(json.dumps({'scans':meta, 'regions':names, 'tr':args.tr, 'seed':args.seed, 'replicates':args.replicates, 'excluded_stn':args.exclude_stn, 'eigenvector_sign':'solver-signs-then-final-vector-rule', 'feature_source':feature_source, 'band_hz':[0.04,0.07], 'state_index_base':0}, indent=2), encoding='utf-8')
 
     np.savetxt(out/'Vemp.csv', result['centers'].T, delimiter=',')
     np.savetxt(out/'State_ts.csv', result['states']+1, delimiter=',', fmt='%d')
