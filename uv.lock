@@ -2,6 +2,12 @@ version = 1
 revision = 3
 requires-python = "==3.11.*"
 
+[manifest]
+members = [
+    "weida",
+    "weida-preprocessing",
+]
+
 [[package]]
 name = "cloudpickle"
 version = "3.1.2"
@@ -290,6 +296,7 @@ dependencies = [
     { name = "numpy" },
     { name = "scikit-learn" },
     { name = "scipy" },
+    { name = "weida-preprocessing" },
 ]
 
 [package.metadata]
@@ -297,5 +304,21 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "numpy", specifier = ">=1.26" },
     { name = "scikit-learn", specifier = ">=1.4" },
+    { name = "scipy", specifier = ">=1.11" },
+    { name = "weida-preprocessing", editable = "packages/preprocessing" },
+]
+
+[[package]]
+name = "weida-preprocessing"
+version = "0.1.0"
+source = { editable = "packages/preprocessing" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "numpy", specifier = ">=1.26" },
     { name = "scipy", specifier = ">=1.11" },
 ]

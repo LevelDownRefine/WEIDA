@@ -1,4 +1,4 @@
-name: MATLAB 调用 Python 单元测试
+name: MATLAB unit and original preprocessing parity
 on:
   push:
     branches: [main]
@@ -19,6 +19,7 @@ jobs:
       - uses: matlab-actions/setup-matlab@v3
         with:
           release: R2025b
+          products: Signal_Processing_Toolbox
       - uses: matlab-actions/run-command@v3
         with:
           command: results = runtests('tests/matlab'); disp(table(results)); assertSuccess(results)

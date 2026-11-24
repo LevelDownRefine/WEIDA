@@ -9,8 +9,17 @@ dependencies = [
     "scipy>=1.11",
     "scikit-learn>=1.4",
     "matplotlib>=3.11.2",
+    "weida-preprocessing",
 ]
 
 [tool.uv]
 package = false
 required-version = ">=0.11.28"
+
+[tool.uv.workspace]
+members = [
+    "packages/preprocessing",
+]
+
+[tool.uv.sources]
+weida-preprocessing = { workspace = true }
