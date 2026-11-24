@@ -6,14 +6,15 @@ from pathlib import Path
 
 import numpy as np
 from scipy import stats
-from weida_postprocessing import (
+
+from common.adapters import load_weida
+from common.postprocessing import (
     FeatureTable,
     adjust_bh,
     compare_features,
     save_results,
     statistics,
 )
-from weida_postprocessing.adapters import load_weida
 
 
 class SharedResearchTests(unittest.TestCase):

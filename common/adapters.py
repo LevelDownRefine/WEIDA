@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import FeatureTable
+from .postprocessing import FeatureTable
 
 
 def load_weida(directory,features_directory=None):

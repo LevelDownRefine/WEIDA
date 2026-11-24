@@ -2,8 +2,8 @@
 import argparse
 from pathlib import Path
 
-from weida_postprocessing import save_results
-from weida_postprocessing.adapters import load_weida
+from common.adapters import load_weida
+from common.postprocessing import save_results
 
 
 def main():

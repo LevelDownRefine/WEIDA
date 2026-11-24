@@ -10,7 +10,7 @@
 | `scipy.signal.butter` | 构造带通滤波器 | [butter](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L75) |
 | `scipy.signal.filtfilt` | 双向滤波 | [filtfilt](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L88) |
 
-## 后处理（`weida_postprocessing`）
+## 后处理（`common.postprocessing`）
 
 | 函数 / 类型 | 做什么 | 出处 / 封装理由 |
 | --- | --- | --- |

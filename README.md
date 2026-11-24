@@ -98,7 +98,7 @@ Transforms are opt-in; the default returns a copy. No phase extraction or frame 
 
 ## 共享后处理
 
-`common/postprocessing` 提供 `weida-postprocessing`，直接封装原作者 `group_comparison.py` 的三组 t 检验和 statsmodels BH。公共包直接调用 `statistics.py` 中的正式统计函数，并与原脚本生成的独立离线基准对照，覆盖正常、NaN 和退化输入；不再添加置信区间、自动排除缺失值或替换退化结果。工程封装理由见 [函数与出处](common/README.md)。
+`common/statistics.py` 提供 `weida-common`，直接封装原作者 `group_comparison.py` 的三组 t 检验和 statsmodels BH。公共包直接调用 `statistics.py` 中的正式统计函数，并与原脚本生成的独立离线基准对照，覆盖正常、NaN 和退化输入；不再添加置信区间、自动排除缺失值或替换退化结果。工程封装理由见 [函数与出处](common/README.md)。
 
 ```sh
 uv run --locked python run_postprocessing.py --input /path/to/model_output --output /path/to/shared_report
