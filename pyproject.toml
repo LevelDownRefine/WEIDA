@@ -26,6 +26,5 @@ weida-preprocessing = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "pandas>=3.1.1",
     "statsmodels>=0.15.0",
 ]

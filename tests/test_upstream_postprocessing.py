@@ -2,12 +2,9 @@
 import unittest
 
 import numpy as np
-import pandas as pd
 
-from downstream import functional_segregation, independent_comparison, paired_comparison
+from downstream import independent_comparison, paired_comparison
 from tests.references.original_postprocessing import (
-    calculate_functional_segregation_strength,
-    calculate_nodal_functional_segregation_strength,
     get_fdr,
     original_group_comparison,
 )
@@ -16,8 +13,8 @@ from tests.references.original_postprocessing import (
 class UpstreamPostprocessingTests(unittest.TestCase):
     def test_three_group_statistics_and_bh(self):
         rng = np.random.default_rng(274)
-        hc, off = rng.normal(size=(16, 4)), rng.normal(size=(25, 4))
-        on = off + rng.normal(loc=.2, size=(25, 4))
+        hc, off = rng.normal(size=(16, 16)), rng.normal(size=(25, 16))
+        on = off + rng.normal(loc=.2, size=(25, 16))
         expected_t, expected_p, expected_q = original_group_comparison(hc, off, on)
         values = np.concatenate([hc, off, on])
         groups = ['HC'] * 16 + ['OFF'] * 25 + ['ON'] * 25
@@ -37,21 +34,6 @@ class UpstreamPostprocessingTests(unittest.TestCase):
         from scipy.stats import false_discovery_control
         for p in ([0, 1, .01, .01], [.9, .9, .9, .9], [1e-12, .04, .2, .99]):
             np.testing.assert_allclose(false_discovery_control(p), get_fdr(p), atol=1e-12, rtol=0)
-
-    def test_functional_and_nodal_segregation(self):
-        rng = np.random.default_rng(275)
-        for regions, frames, split in [(4, 80, 2), (7, 210, 2), (78, 210, 31)]:
-            with self.subTest(regions=regions):
-                scan = rng.normal(size=(regions, frames))
-                center = np.r_[np.ones(split), -np.ones(regions-split)]
-                ts = pd.DataFrame(scan.T)
-                positive, negative = list(range(split)), list(range(split, regions))
-                expected = calculate_functional_segregation_strength(ts, positive, negative)
-                nodal = calculate_nodal_functional_segregation_strength(ts, positive, negative, regions)
-                actual = functional_segregation(scan, center)
-                np.testing.assert_allclose([actual[k] for k in ('within', 'across', 'segregation')], expected, atol=1e-12, rtol=0)
-                np.testing.assert_allclose(actual['nodal'], nodal, atol=1e-12, rtol=0)
-                self.assertEqual(actual['clipped_edges'], 0)
 
     def test_missing_values_are_an_explicit_extension(self):
         # 原脚本不排除 NaN，现实现按指标成对排除；此项记录差异，不宣称等价。

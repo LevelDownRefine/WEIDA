@@ -1,4 +1,4 @@
-name: MATLAB 前后处理数值对照
+name: MATLAB unit and original preprocessing parity
 on:
   push:
     branches: [main]

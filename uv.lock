@@ -398,7 +398,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "pandas" },
     { name = "statsmodels" },
 ]
 
@@ -412,10 +411,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "pandas", specifier = ">=3.1.1" },
-    { name = "statsmodels", specifier = ">=0.15.0" },
-]
+dev = [{ name = "statsmodels", specifier = ">=0.15.0" }]
 
 [[package]]
 name = "weida-preprocessing"
