@@ -14,8 +14,12 @@
 
 | 函数 / 类型 | 做什么 | 出处 / 封装理由 |
 | --- | --- | --- |
-| `compare_features` | 三组 t 检验、均值/标准差、均差及 p/q | [作者检验](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py)；均差仅汇总效应方向 |
-| `adjust_bh` | statsmodels BH 校正 | [get_fdr](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py) |
+| `compare_features` | 配对、按族调用统计、整理输出 | 工程封装，调用 [作者检验](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py)；均差仅汇总效应方向 |
+| `adjust_bh` | `get_fdr` 的兼容名称 | [get_fdr](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py) |
+| `describe_groups` | 均值、总体标准差 | [描述统计](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py#L82-L87) |
+| `compare_groups` | 三组 t/p | [三组检验](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py#L89-L91) |
+| `get_fdr` | BH 校正 | [get_fdr](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py#L6-L9) |
+| `group_comparison` | 串联检验和校正 | [逐对比校正](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py#L115-L117) |
 | `FeatureTable` | 指标、单位和校正族 | 工程封装：避免混淆指标与检验族 |
 | `group_indices` | ID 配对与完整性检查 | 工程封装：避免按文件顺序错配患者 |
 | `write_table` | 保存 CSV | 工程封装：统一输出字段 |
@@ -23,3 +27,5 @@
 | `adapters.load_weida` | 读取已有 WEIDA 结果 | 工程封装：接入已有输出，不重算指标 |
 
 统计不删除 NaN、不替换退化结果、不增加置信区间；每个对比按预先声明的指标族校正。直接对照公共包的测试见 [test_postprocessing.py](../tests/test_postprocessing.py)。作图暂不纳入，待对齐作者实现。
+
+实际调用：`compare_features → author_statistics.describe_groups / group_comparison → compare_groups / get_fdr`。统计只维护一份，测试使用原脚本生成的基准数据。

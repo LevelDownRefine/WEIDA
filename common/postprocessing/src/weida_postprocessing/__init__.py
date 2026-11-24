@@ -5,8 +5,31 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
-from scipy import stats
-from statsmodels.stats.multitest import multipletests
+
+from . import author_statistics
+from .author_statistics import (
+    CONTRASTS,
+    GROUPS,
+    compare_groups,
+    describe_groups,
+    get_fdr,
+    group_comparison,
+)
+
+__all__ = [
+    "CONTRASTS",
+    "GROUPS",
+    "FeatureTable",
+    "adjust_bh",
+    "compare_features",
+    "compare_groups",
+    "describe_groups",
+    "get_fdr",
+    "group_comparison",
+    "group_indices",
+    "save_results",
+    "write_table",
+]
 
 
 @dataclass
@@ -53,42 +76,36 @@ def group_indices(scans):
     return {g:[v[k] for k in sorted(v)] for g,v in groups.items()}
 
 
-def adjust_bh(p):
-    """原作者 get_fdr：直接调用 statsmodels BH，不替换 NaN。
-
-    出处：https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py
-    """
-    return multipletests(p, method="fdr_bh", alpha=0.05)[1]
+# 兼容已有名字，直接导出唯一的 BH 实现。
+adjust_bh = author_statistics.get_fdr
 
 
 def compare_features(table):
-    """封装作者三组检验；仅增加 ID 对齐、指标族选择和具名输出。
-
-    出处：https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py
-    不排除缺失值，不替换退化检验结果，不新增置信区间。
-    """
+    """仅负责 ID 配对、指标族选择和输出；统计交给作者函数。"""
     idx = group_indices(table.scans)
+    groups = tuple(table.values[idx[g]] for g in GROUPS)
+    means, stds = author_statistics.describe_groups(*groups)
+    t = np.empty((len(CONTRASTS), len(table.names)))
+    p = np.empty_like(t)
+    q = np.empty_like(t)
+    for family in dict.fromkeys(table.families):
+        columns = [k for k, value in enumerate(table.families) if value == family]
+        t[:, columns], p[:, columns], q[:, columns] = author_statistics.group_comparison(
+            *(values[:, columns] for values in groups))
     rows = []
-    for first, second in [('ON', 'OFF'), ('OFF', 'HC'), ('ON', 'HC')]:
-        current = []
-        paired = second == 'OFF'
+    for contrast in ('ON-OFF', 'OFF-HC', 'ON-HC'):
+        first, second = contrast.split('-')
+        ci, ai, bi = CONTRASTS.index(contrast), GROUPS.index(first), GROUPS.index(second)
         for k, name in enumerate(table.names):
-            a, b = table.values[idx[first], k], table.values[idx[second], k]
-            test = stats.ttest_rel(a, b) if paired else stats.ttest_ind(a, b)
-            current.append({
-                'contrast': first+'-'+second, 'feature': name, 'family': table.families[k],
-                'unit': table.units[k], 'n_first': len(a), 'n_second': len(b),
-                'mean_first': float(np.mean(a)), 'mean_second': float(np.mean(b)),
-                'std_first': float(np.std(a)), 'std_second': float(np.std(b)),
-                'difference': float(np.mean(a)-np.mean(b)),
-                't': float(test.statistic), 'p': float(test.pvalue), 'q': np.nan,
-                'test': 'paired_t' if paired else 'independent_equal_variance_t',
+            rows.append({
+                'contrast': contrast, 'feature': name, 'family': table.families[k],
+                'unit': table.units[k], 'n_first': len(groups[ai]), 'n_second': len(groups[bi]),
+                'mean_first': float(means[ai, k]), 'mean_second': float(means[bi, k]),
+                'std_first': float(stds[ai, k]), 'std_second': float(stds[bi, k]),
+                'difference': float(means[ai, k]-means[bi, k]),
+                't': float(t[ci, k]), 'p': float(p[ci, k]), 'q': float(q[ci, k]),
+                'test': 'paired_t' if second == 'OFF' else 'independent_equal_variance_t',
             })
-        for family in dict.fromkeys(table.families):
-            selected = [r for r in current if r['family'] == family]
-            for row, q in zip(selected, adjust_bh([r['p'] for r in selected])):
-                row['q'] = float(q)
-        rows.extend(current)
     return rows
 
 

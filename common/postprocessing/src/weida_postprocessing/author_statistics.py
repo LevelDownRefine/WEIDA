@@ -1,4 +1,4 @@
-"""作者 DBS 组间统计的函数化参考，仅拆分步骤与参数。
+"""作者 DBS 组间统计的正式实现，仅拆分步骤与参数。
 
 出处：https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py
 """
@@ -37,7 +37,7 @@ def get_fdr(p_list):
     return multipletests(p_list, method="fdr_bh", alpha=0.05)[1]
 
 
-def original_group_comparison(hc, off, on):
+def group_comparison(hc, off, on):
     """串联检验和原第 115–117 行的逐对比校正，返回 t、p、q。"""
     t_values, p_values = compare_groups(hc, off, on)
     return t_values, p_values, np.array([get_fdr(p) for p in p_values])

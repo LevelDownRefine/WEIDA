@@ -398,11 +398,6 @@ dependencies = [
     { name = "weida-preprocessing" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "statsmodels" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "matplotlib", specifier = ">=3.11.2" },
@@ -412,9 +407,6 @@ requires-dist = [
     { name = "weida-postprocessing", editable = "common/postprocessing" },
     { name = "weida-preprocessing", editable = "common/preprocessing" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "statsmodels", specifier = ">=0.15.0" }]
 
 [[package]]
 name = "weida-postprocessing"

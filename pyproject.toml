@@ -27,7 +27,3 @@ members = [
 weida-preprocessing = { workspace = true }
 weida-postprocessing = { workspace = true }
 
-[dependency-groups]
-dev = [
-    "statsmodels>=0.15.0",
-]

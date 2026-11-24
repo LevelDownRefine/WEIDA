@@ -6,10 +6,14 @@ from pathlib import Path
 
 import numpy as np
 from scipy import stats
-from weida_postprocessing import FeatureTable, adjust_bh, compare_features, save_results
+from weida_postprocessing import (
+    FeatureTable,
+    adjust_bh,
+    author_statistics,
+    compare_features,
+    save_results,
+)
 from weida_postprocessing.adapters import load_weida
-
-from tests.references.original_postprocessing import get_fdr, original_group_comparison
 
 
 class SharedResearchTests(unittest.TestCase):
@@ -32,7 +36,7 @@ class SharedResearchTests(unittest.TestCase):
         self.assertEqual(compare_features(shuffled), result)
 
     def test_bh_preserves_author_nan_behavior(self):
-        np.testing.assert_allclose(adjust_bh([.02, .04, np.nan]), get_fdr([.02, .04, np.nan]), equal_nan=True)
+        np.testing.assert_allclose(adjust_bh([.02, .04, np.nan]), np.full(3, np.nan), equal_nan=True)
 
     def test_shared_report_without_unvalidated_figures(self):
         with tempfile.TemporaryDirectory() as d:
@@ -60,25 +64,37 @@ class SharedResearchTests(unittest.TestCase):
         for row in result: np.testing.assert_allclose(row['p'],row['q'],equal_nan=True)
         self.assertTrue(np.isnan(result[0]['p']))
 
-    def test_package_directly_matches_author(self):
-        rng = np.random.default_rng(18)
-        for case in ('finite', 'missing', 'degenerate'):
-            values = rng.normal(size=(9, 16))
-            if case == 'missing':
-                values[3, 0] = np.nan
-            if case == 'degenerate':
-                values[:, 0] = 1
-            table = FeatureTable(values, self.scans, tuple(map(str, range(16))),
-                                 ('phiid',)*16, ('bit',)*16, 'PhiID', 'test')
-            expected = original_group_comparison(values[:3], values[3:6], values[6:])
+    def test_adapter_matches_original_script_fixture(self):
+        fixture = json.loads((Path(__file__).parent / 'references/statistics_fixture.json').read_text(encoding='utf-8'))
+        scans = [{'subject': f'sub-{prefix}{i:02}', 'condition': group}
+                 for group, prefix, n in [('HC', 'HC', 16), ('OFF', 'STNoff', 25), ('ON', 'STNon', 25)]
+                 for i in range(n)]
+        for case, expected in fixture['cases'].items():
+            values = np.array(fixture['input'])
+            if case == 'missing': values[16, 0] = np.nan
+            if case == 'constant': values[:, 0] = 1
+            if case == 'constant_change':
+                values[16:41, 0] = 0
+                values[41:, 0] = 1
+            table = FeatureTable(values, scans, tuple('abcd'), ('phiid',)*4, ('bit',)*4, 'PhiID', 'test')
             rows = compare_features(table)
             for contrast, source in [('ON-OFF', 1), ('OFF-HC', 0), ('ON-HC', 2)]:
                 selected = [r for r in rows if r['contrast'] == contrast]
-                for key, reference in zip(('t', 'p', 'q'), expected):
-                    np.testing.assert_allclose([r[key] for r in selected], reference[source],
-                                               atol=1e-12, rtol=0, equal_nan=True)
+                for key in ('t', 'p', 'q'):
+                    np.testing.assert_allclose([r[key] for r in selected],
+                        np.array(expected[key], dtype=float)[source], atol=1e-12, rtol=0, equal_nan=True)
                 self.assertNotIn('ci95_low', selected[0])
-                self.assertNotIn('ci95_high', selected[0])
+
+    def test_adapter_delegates_each_family_to_author_functions(self):
+        from unittest.mock import patch
+        table = FeatureTable(np.random.default_rng(15).normal(size=(9, 2)), self.scans,
+                             ('a', 'b'), ('one', 'two'), ('u', 'u'), 'test', 'test')
+        with patch.object(author_statistics, 'group_comparison', wraps=author_statistics.group_comparison) as test, \
+             patch.object(author_statistics, 'describe_groups', wraps=author_statistics.describe_groups) as describe:
+            compare_features(table)
+            self.assertEqual(test.call_count, 2)
+            self.assertEqual(describe.call_count, 1)
+        self.assertIs(adjust_bh, author_statistics.get_fdr)
 
     def test_weida_saved_result_adapter(self):
         with tempfile.TemporaryDirectory() as d:

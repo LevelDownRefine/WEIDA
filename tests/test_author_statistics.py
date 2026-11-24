@@ -1,16 +1,15 @@
-"""验证函数拆分与作者原脚本基准一致，不依赖公共后处理实现。"""
+"""直接验证已安装的正式统计实现与作者原脚本基准一致。"""
 import json
 import unittest
 from pathlib import Path
 
 import numpy as np
-
-from tests.references.original_postprocessing import (
+from weida_postprocessing import (
     CONTRASTS,
     GROUPS,
     compare_groups,
     describe_groups,
-    original_group_comparison,
+    group_comparison,
 )
 
 
@@ -31,7 +30,7 @@ class AuthorStatisticsTests(unittest.TestCase):
                     data[41:, 0] = 1
                 groups = (data[:16], data[16:41], data[41:])
                 means, stds = describe_groups(*groups)
-                t, p, q = original_group_comparison(*groups)
+                t, p, q = group_comparison(*groups)
                 for key, actual in [('mean', means), ('std', stds), ('t', t), ('p', p), ('q', q)]:
                     np.testing.assert_allclose(actual, np.array(expected[key], dtype=float),
                                                rtol=0, atol=1e-12, equal_nan=True)

@@ -5,10 +5,6 @@ build-backend = "hatchling.build"
 [project]
 name = "weida-postprocessing"
 version = "0.1.0"
-description = "Shared subject-level statistics and plots for WEIDA and PhiID"
+description = "Author-derived group statistics for WEIDA and PhiID"
 requires-python = ">=3.11"
-dependencies = [
-    "numpy>=1.26",
-    "scipy>=1.11",
-    "statsmodels>=0.15.0",
-]
+dependencies = ["numpy>=1.26", "scipy>=1.11", "statsmodels>=0.15.0"]
