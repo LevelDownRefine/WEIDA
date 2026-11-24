@@ -2,11 +2,11 @@
 import unittest
 
 import numpy as np
-from weida_postprocessing import (
+
+from common.statistics import (
     get_fdr,
     group_comparison,
 )
-
 from downstream import independent_comparison, paired_comparison
 
 
