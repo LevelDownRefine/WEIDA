@@ -15,7 +15,7 @@ from statsmodels.stats.multitest import multipletests
 
 def get_fdr(p_list):
     fdr = multipletests(p_list, method="fdr_bh", alpha=0.05)[1]
-    
+
     return fdr
 
 def calculate_functional_segregation_strength(ts, modu1, modu2):
@@ -34,22 +34,22 @@ def calculate_functional_segregation_strength(ts, modu1, modu2):
         for j in range(len(modu2)):
             corr_coeff, p_value = pearsonr(ts.iloc[:,modu1[i]],ts.iloc[:,modu2[j]])
             fc12.append(0.5*math.log((1+corr_coeff)/(1-corr_coeff)))
-    
+
     within_module_fc = fc1 + fc2
     across_module_fc = fc12
-            
+
     average_within_module_fc = np.mean(within_module_fc)
-    
+
     average_across_module_fc = np.mean(across_module_fc)
-    
+
     functional_segregation_strength = average_within_module_fc - average_across_module_fc
-    
+
     return average_within_module_fc, average_across_module_fc, functional_segregation_strength
 
 def calculate_nodal_functional_segregation_strength(ts, modu1, modu2, num_parcel):
-    
+
     node_fs = [None] * num_parcel
-    
+
     for i in range(num_parcel):
         fc_in = []
         fc_ac = []
@@ -69,9 +69,9 @@ def calculate_nodal_functional_segregation_strength(ts, modu1, modu2, num_parcel
                 if j != i:
                     corr_coeff, p_value = pearsonr(ts.iloc[:,i],ts.iloc[:,j])
                     fc_in.append(0.5*math.log((1+corr_coeff)/(1-corr_coeff)))
-                
+
         node_fs[i] = np.mean(fc_in) - np.mean(fc_ac)
-    
+
     return node_fs
 
 def original_group_comparison(hc, off, on):
