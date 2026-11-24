@@ -23,7 +23,7 @@ uv run --locked python -m unittest discover -s tests -t . -v
 
 当前数据包含 15 个 HC 和 26 对 STN。STNon18 有 53 个全零脑区，显式指定 `--exclude-stn 18` 后使用 15 个 HC、25 个 OFF 和 25 个 ON 扫描。入口检查脑区列名、重复扫描和 ON/OFF 配对，只选择 HC 与 STN。排除项会写入元数据，输入文件不会被修改。正式分析前仍需确认实际 TR 和研究纳入标准。
 
-CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执行 `uv lock --upgrade`，重跑单元测试和 Octave 对照后再提交锁文件。
+CI 使用同一 Python 版本和 `uv sync --locked`。如需升级依赖，执行 `uv lock --upgrade`，重跑单元测试和 MATLAB 对照后再提交锁文件。
 
 ## 数值约定与限制
 
@@ -49,7 +49,7 @@ uv run --locked python run_weida.py /path/to/input output/matlab_states --tr 2.1
 
 - 准备交接包时只调用一次共享幅度预处理；MATLAB 仅执行 Hilbert、原生 `eigs`、加权和最终向量定号。
 - 导入时校验原始数据签名、扫描/脑区顺序、帧数及 TR；不再进行 Python 特征求解或重复滤波。
-- 输出格式与原入口相同，元数据记录实际 MATLAB/Octave 运行版本及特征来源。Octave 可演练交接，但不能冒充 MATLAB 基准。
+- 输出格式与原入口相同，元数据记录实际运行版本及特征来源；当前验证基准为 MATLAB。
 - 后续聚类仍使用 Python 实现；这一入口不代表随机聚类结果或完整论文结果与原作者一致。
 
 ## 输出文件
@@ -67,7 +67,7 @@ uv run --locked python run_weida.py /path/to/input output/matlab_states --tr 2.1
 
 详见 [测试说明](validation/README.md) 和 [MATLAB 委托测试说明](validation/HANDOFF.md)。
 
-单元测试和独立 Octave 对照均已接入 CI。`validation/report_octave_11.3.0.json` 为撤销额外定号规则之前的历史记录，不能作为当前版本的验证结果。当前对照按原始符号规则运行；原始特征差异会使检查失败。
+CI 运行 Python 单元测试、Ruff 和真实 MATLAB 对照。Octave 已退出 CI，不再维护；旧脚本及报告仅保留作历史追溯。MATLAB 对照按原始符号规则运行，原始特征差异仍会使检查失败。
 
 完整真实数据运行及 MATLAB 基准对照仍未完成。委托 MATLAB 操作者无需安装 Python 或 uv；只有准备测试包、接收并比较结果的一方使用 uv。
 
@@ -99,4 +99,4 @@ uv run --locked python run_features.py /path/to/model/output --output /path/to/n
 
 输出包括 `features.npz`、`paired_statistics.json`、`independent_statistics.json` 和元数据。BH-FDR 分别作用于每一比较、每一指标族：四个状态、16 条转移或78个节点分别校正，不能解释为对所有分析统一控制。没有有效源状态的转移行先标为缺失再统计。JSON 中不可估计的数值目前使用 Python 的 NaN 表示。
 
-同一数据用于拟合状态再做组间分析，当前结果仅作探索；训练集中心回代标签一致率用于实现检查，不是外部预测准确率。TI 队列的正式预测及 MATLAB 对照尚未执行。现有 Octave 对照仍覆盖原四阶段；新增模块目前依靠单元测试及真实数据试运行验证。
+同一数据用于拟合状态再做组间分析，当前结果仅作探索；训练集中心回代标签一致率用于实现检查，不是外部预测准确率。TI 队列的正式预测及 MATLAB 对照尚未执行。现有 MATLAB 对照覆盖原四阶段的合成测试；新增模块目前依靠单元测试及真实数据试运行验证。

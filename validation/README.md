@@ -1,4 +1,4 @@
-# 单元测试、Octave 对照与 MATLAB 委托测试
+# 单元测试与 MATLAB 对照
 
 所有命令在仓库根目录运行。测试使用合成数据，不需要上传真实受试者数据。
 
@@ -14,27 +14,29 @@ uv run --locked python -m unittest discover -s tests -t . -v
 
 预期值来自可手算样例；测试不依赖 MATLAB 或 Octave。
 
-## 2. 当前的 Octave 对照
+## 2. MATLAB 数值对照
 
 ```bash
-uv run --locked python validation/compare.py --octave C:/path/to/octave-cli.exe --output validation_output
+uv run --locked python validation/compare.py --prepare-only --output validation_output/matlab_handoff
 ```
 
-比较器生成固定种子的 78 脑区、210 时间点数据，调用 `reference.m`，输出中间 `.mat` 文件、日志和 `report.json`。
+比较器生成固定种子的 78 脑区、210 时间点数据。由真实 MATLAB 运行交接包中的 `run_reference`，再使用第 5 节的命令生成对照报告。MATLAB 是当前唯一跨语言数值基准。
 
 参考脚本按原公式独立实现，并非未经修改的整份上游脚本：数据读取改为固定测试输入；保留原脚本的求解器符号和最终向量定号顺序；聚类使用分离的模拟簇与共享初始中心，而非随机重启 300 次；状态统计使用预设标签，涵盖缺失状态、全程单一状态及首尾不完整段。
 
 检查内容：
 
 - 滤波系数、滤波信号和相位。
-- 导出 MATLAB/Octave 原始特征对，调用生产函数 `weight_eigenvectors` 单独验证加权及最终定号，不在 Python 重新分解或匹配符号。
+- 导出 MATLAB 原始特征对，调用生产函数 `weight_eigenvectors` 单独验证加权及最终定号，不在 Python 重新分解或匹配符号。
 - 原符号的加权特征向量；共享相位的对照用于隔离特征分解器差异。
 - 固定初始中心后的标签、中心、平方距离、类内距离总和及轮廓系数。
 - 占比、持续时间、排序、个体转移及组平均。
 
 必需检查失败时返回非零退出码。原始特征向量的共享相位和端到端对照均为必需检查；滤波差异另行报告。报告与具体运行版本和输入绑定；通过检查不等于 MATLAB 等价或科学结论有效。
 
-## 3. 已记录的验证
+## 3. Octave 历史记录（不再维护）
+
+Octave 已退出 CI 和当前验证要求。旧脚本、报告仅用于追溯历史，不再作为复现或合并依据。
 
 Windows 便携环境：Octave 11.3.0、signal 1.4.7、statistics 1.8.3。误差及 Python 依赖版本见 `report_octave_11.3.0.json`。
 
@@ -42,13 +44,13 @@ Windows 便携环境：Octave 11.3.0、signal 1.4.7、statistics 1.8.3。误差�
 
 ## 4. 持续集成（CI）
 
-GitHub Actions 在主分支 push 和 PR 时运行 Python UT、Octave 对照和 MATLAB R2025b 测试。两者使用 uv 锁文件重建环境；Octave 任务安装 Linux 工具包和无窗口绘图后端，失败时也上传中间结果、日志和报告。
+GitHub Actions 在主分支 push 和 PR 时运行 Python UT、Ruff 和 MATLAB R2025b 测试。使用 uv 锁文件重建 Python 环境，MATLAB 对照失败时仍上传中间结果、日志和报告。
 
 MATLAB 任务在已有 Python 调用测试之后，复用交接包运行独立的 `reference.m`（需要 Signal Processing Toolbox 和 Statistics and Machine Learning Toolbox），再由 Python 读取 `reference.mat` 对照生产函数。预处理直接调用 `preprocessing.py`，不在比较器中另写一份滤波实现。
 
 MATLAB CI 使用 `--strict-signal`，将滤波信号和相位误差也设为必需检查（绝对容差 1e-8）；原始特征向量对照始终为必需检查。聚类采用共享固定初始中心，状态统计采用预设标签，不能据此推断随机聚类或论文全部结果等价。输入、参考脚本、日志和逐项误差报告作为 `matlab-reference-report` 上传。
 
-原始特征向量不匹配会使 CI 失败；不通过修改两边符号规则来获得绿色结果。Linux 与 Windows 的 Octave 版本可能不同，因此日志会记录运行环境。
+原始特征向量不匹配仍会使 MATLAB CI 失败；不通过修改两边符号规则来获得绿色结果。日志记录实际运行环境。
 
 ## 5. 委托别人用 MATLAB 测试
 
@@ -58,12 +60,12 @@ MATLAB CI 使用 `--strict-signal`，将滤波信号和相位误差也设为必�
 uv run --locked python validation/compare.py --prepare-only --output validation_output/matlab_handoff
 ```
 
-将整个目录压缩交给操作者。包内的 `HANDOFF.md` 包含中文步骤；对方只需运行 `run_reference`，回传目录及生成的 `reference.mat`、`runtime.log`。输入、脚本校验值和环境日志随包保留。同一包也可以先用 Octave 演练。
+将整个目录压缩交给操作者。包内的 `HANDOFF.md` 包含中文步骤；对方只需运行 `run_reference`，回传目录及生成的 `reference.mat`、`runtime.log`。输入、脚本校验值和环境日志随包保留。
 
 收到结果后，在无需 MATLAB 的环境中运行：
 
 ```bash
-uv run --locked python validation/compare.py --compare-only --output /path/to/returned-folder
+uv run --locked python validation/compare.py --compare-only --strict-signal --output /path/to/returned-folder
 ```
 
 请在本地保留原始清单并与回传清单核对。SHA256 清单用于检测意外修改，不是防止蓄意替换的数字签名。此流程对照独立参考实现；拿到实际 MATLAB 回传结果前，不能宣称已完成 MATLAB 验证。

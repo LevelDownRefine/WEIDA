@@ -8,7 +8,7 @@
 4. 把整个目录压缩回传，至少保留 input.mat、manifest.json、reference.m、run_reference.m、reference.mat 和 runtime.log。
 5. 如果报错，不要自行改算法；把 runtime.log 和完整报错回传。
 
-命令行也可使用 `matlab -batch "run_reference"`。Octave 使用 `octave --no-gui --quiet --eval "run_reference"`，需 signal/statistics 包。
+命令行也可使用 `matlab -batch "run_reference"`。当前交接与验收使用真实 MATLAB；Octave 不再作为验证基准。
 
 本任务是独立四阶段参考实现的对照，不是运行整份原始论文脚本。保留 MATLAB 求解器返回的特征向量符号，仅按原脚本调整加权后总向量符号；原始特征结果与 Python 的对照为必需检查。
 
