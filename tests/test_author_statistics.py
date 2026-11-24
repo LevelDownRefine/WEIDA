@@ -4,7 +4,8 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-from weida_postprocessing import (
+
+from common.statistics import (
     CONTRASTS,
     GROUPS,
     compare_groups,
