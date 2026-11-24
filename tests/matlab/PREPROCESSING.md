@@ -15,15 +15,15 @@
 
 ## 我们编写的测试代码
 
-来源为本 PR 的 [testPreprocessing.m](testPreprocessing.m)，不是原作者算法代码。
+来源为本 PR 的 [testPreprocessing.m](testPreprocessing.m) 和 [original_preprocess.m](original_preprocess.m)，不是原作者已有函数。后者是薄封装，原样执行上游脚本语句并直接调用上游 `demean.m`。
 
 | 函数 | 用途 |
 | --- | --- |
 | `testPreprocessing` | 注册 MATLAB 单元测试。 |
-| `setupOnce` | 提取原版代码块，确认上游 `demean.m` 路径，连接 uv 环境中的生产 Python 入口。 |
-| `testOriginalAmplitudePipeline` | 构造合成数据，执行原版预处理及 Python 预处理，逐元素比较并打印误差。 |
+| `setupOnce` | 连接 uv 环境中安装的 Python 预处理包。 |
+| `original_preprocess(BOLD, TR)` | 提取并执行原版预处理语句，直接调用上游 `demean.m`，返回幅值序列并恢复 MATLAB 路径。 |
+| `testOriginalAmplitudePipeline` | 构造合成数据，调用 `original_preprocess` 与 Python 函数，逐元素比较并打印误差。 |
 | `numbers` | 将 Python 数组转换为 MATLAB 数组，仅用于比较。 |
-| `teardownOnce` | 恢复 MATLAB 搜索路径。 |
 
 ## 覆盖范围与运行
 
@@ -41,3 +41,11 @@ matlab -batch "results = runtests('tests/matlab'); disp(table(results)); assertS
 ```
 
 没有 MATLAB 时仍可运行现有 Python 单测；PR 中独立的 MATLAB 工作流负责真实 MATLAB 对照。
+
+测试中的函数对照：
+
+```matlab
+expected = original_preprocess(BOLD, TR);
+actual = py.weida_preprocessing.preprocess_scan(...);
+% 对全部脑区和时间点比较，AbsTol = 1e-8。
+```
