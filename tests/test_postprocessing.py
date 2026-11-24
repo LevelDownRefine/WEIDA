@@ -83,6 +83,12 @@ class SharedResearchTests(unittest.TestCase):
                 for key in ('t', 'p', 'q'):
                     np.testing.assert_allclose([r[key] for r in selected],
                         np.array(expected[key], dtype=float)[source], atol=1e-12, rtol=0, equal_nan=True)
+                first, second = contrast.split('-')
+                for suffix, group in [('first', first), ('second', second)]:
+                    group_index = ('HC', 'OFF', 'ON').index(group)
+                    for key in ('mean', 'std'):
+                        np.testing.assert_allclose([r[f'{key}_{suffix}'] for r in selected],
+                            np.array(expected[key], dtype=float)[group_index], atol=1e-12, rtol=0, equal_nan=True)
                 self.assertNotIn('ci95_low', selected[0])
 
     def test_adapter_delegates_each_family_to_author_functions(self):

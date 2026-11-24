@@ -26,4 +26,3 @@ members = [
 [tool.uv.sources]
 weida-preprocessing = { workspace = true }
 weida-postprocessing = { workspace = true }
-
