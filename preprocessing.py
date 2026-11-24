@@ -1,6 +1,6 @@
 """Shared BOLD amplitude preprocessing, independent of the analysis method."""
 import numpy as np
-from scipy.signal import butter, detrend, filtfilt
+from weida_preprocessing import preprocess_scan
 
 
 def preprocess_bold(scan, tr=2.1, band=(0.04, 0.07)):
@@ -21,10 +21,4 @@ def preprocess_bold(scan, tr=2.1, band=(0.04, 0.07)):
         return x
     if not 0 < band[0] < band[1] < .5/tr:
         raise ValueError('Invalid bandpass')
-    b, a = butter(2, band, btype='bandpass', fs=1/tr)
-    padlen = 3*(max(len(a), len(b))-1)
-    if x.shape[1] <= padlen:
-        raise ValueError('Insufficient time points')
-    ts = detrend(x, axis=1)
-    ts -= ts.mean(axis=1, keepdims=True)
-    return filtfilt(b, a, ts, axis=1, padlen=padlen)
+    return preprocess_scan(x, remove_trend=True, demean=True, band=band, tr=tr)

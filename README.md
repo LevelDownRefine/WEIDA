@@ -81,3 +81,17 @@ uv run --locked python run_features.py /path/to/model/output --output /path/to/n
 输出包括 `features.npz`、`paired_statistics.json`、`independent_statistics.json` 和元数据。BH-FDR 分别作用于每一比较、每一指标族：四个状态、16 条转移或78个节点分别校正，不能解释为对所有分析统一控制。没有有效源状态的转移行先标为缺失再统计。JSON 中不可估计的数值目前使用 Python 的 NaN 表示。
 
 同一数据用于拟合状态再做组间分析，当前结果仅作探索；训练集中心回代标签一致率用于实现检查，不是外部预测准确率。TI 队列的正式预测及 MATLAB 对照尚未执行。现有 Octave 对照仍覆盖原四阶段；新增模块目前依靠单元测试及真实数据试运行验证。
+
+## Shared amplitude preprocessing package
+
+`packages/preprocessing` is the installable `weida-preprocessing` package (NumPy/SciPy only).
+WEIDA's `preprocessing.py` delegates to it; downstream projects should pin a full Git commit
+that has passed this repository's Python and original MATLAB preprocessing CI.
+
+```python
+from weida_preprocessing import preprocess_scan
+filtered = preprocess_scan(bold, remove_trend=True, demean=True, band=(0.04, 0.07), tr=2.1)
+```
+
+Transforms are opt-in; the default returns a copy. No phase extraction or frame trimming.
+[MATLAB source attribution and coverage](tests/matlab/PREPROCESSING.md).
