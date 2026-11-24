@@ -1,4 +1,6 @@
 function x=demean(x,dim)
+% Source: https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m
+% Original upstream function, unchanged except these source comments.
 
 % DEMEAN(X) 
 % Removes the Average or mean value.
