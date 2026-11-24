@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """与算法无关的受试者指标表、统计检验及结果保存。"""
 import csv
 import json
@@ -6,8 +7,12 @@ from pathlib import Path
 
 import numpy as np
 
-from . import author_statistics
-from .author_statistics import (
+from . import statistics
+from .statistics import (
+=======
+"""共用后处理的统计入口。"""
+from .statistics import (
+>>>>>>> refactor/author-statistics
     CONTRASTS,
     GROUPS,
     compare_groups,
@@ -77,20 +82,20 @@ def group_indices(scans):
 
 
 # 兼容已有名字，直接导出唯一的 BH 实现。
-adjust_bh = author_statistics.get_fdr
+adjust_bh = statistics.get_fdr
 
 
 def compare_features(table):
     """仅负责 ID 配对、指标族选择和输出；统计交给作者函数。"""
     idx = group_indices(table.scans)
     groups = tuple(table.values[idx[g]] for g in GROUPS)
-    means, stds = author_statistics.describe_groups(*groups)
+    means, stds = statistics.describe_groups(*groups)
     t = np.empty((len(CONTRASTS), len(table.names)))
     p = np.empty_like(t)
     q = np.empty_like(t)
     for family in dict.fromkeys(table.families):
         columns = [k for k, value in enumerate(table.families) if value == family]
-        t[:, columns], p[:, columns], q[:, columns] = author_statistics.group_comparison(
+        t[:, columns], p[:, columns], q[:, columns] = statistics.group_comparison(
             *(values[:, columns] for values in groups))
     rows = []
     for contrast in ('ON-OFF', 'OFF-HC', 'ON-HC'):

@@ -28,4 +28,4 @@
 
 统计不删除 NaN、不替换退化结果、不增加置信区间；每个对比按预先声明的指标族校正。直接对照公共包的测试见 [test_postprocessing.py](../tests/test_postprocessing.py)。作图暂不纳入，待对齐作者实现。
 
-实际调用：`compare_features → author_statistics.describe_groups / group_comparison → compare_groups / get_fdr`。统计只维护一份，测试使用原脚本生成的基准数据。
+实际调用：`compare_features → statistics.describe_groups / group_comparison → compare_groups / get_fdr`。统计只维护一份，测试使用原脚本生成的基准数据。

@@ -1,4 +1,4 @@
-"""作者 DBS 组间统计的正式实现，仅拆分步骤与参数。
+"""通用三组统计，供 WEiDA 和 PhiID 共用；沿用作者计算逻辑。
 
 出处：https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py
 """

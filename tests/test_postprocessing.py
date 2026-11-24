@@ -9,7 +9,7 @@ from scipy import stats
 from weida_postprocessing import (
     FeatureTable,
     adjust_bh,
-    author_statistics,
+    statistics,
     compare_features,
     save_results,
 )
@@ -95,12 +95,12 @@ class SharedResearchTests(unittest.TestCase):
         from unittest.mock import patch
         table = FeatureTable(np.random.default_rng(15).normal(size=(9, 2)), self.scans,
                              ('a', 'b'), ('one', 'two'), ('u', 'u'), 'test', 'test')
-        with patch.object(author_statistics, 'group_comparison', wraps=author_statistics.group_comparison) as test, \
-             patch.object(author_statistics, 'describe_groups', wraps=author_statistics.describe_groups) as describe:
+        with patch.object(statistics, 'group_comparison', wraps=statistics.group_comparison) as test, \
+             patch.object(statistics, 'describe_groups', wraps=statistics.describe_groups) as describe:
             compare_features(table)
             self.assertEqual(test.call_count, 2)
             self.assertEqual(describe.call_count, 1)
-        self.assertIs(adjust_bh, author_statistics.get_fdr)
+        self.assertIs(adjust_bh, statistics.get_fdr)
 
     def test_weida_saved_result_adapter(self):
         with tempfile.TemporaryDirectory() as d:

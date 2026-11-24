@@ -15,4 +15,4 @@
 
 重建：`uv run --locked python tests/references/generate_statistics_fixture.py`（需要 gh 和网络）。日常测试仅读取基准：`uv run --locked python -m unittest tests.test_author_statistics`。
 
-正式实现位于 `common/postprocessing/src/weida_postprocessing/author_statistics.py`；安装包直接提供这些入口。此目录仅保留原脚本基准及生成工具，不再复制统计实现。
+正式实现位于 `common/postprocessing/src/weida_postprocessing/statistics.py`；安装包直接提供这些入口。此目录仅保留原脚本基准及生成工具，不再复制统计实现。
