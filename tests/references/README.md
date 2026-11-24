@@ -1,6 +1,6 @@
 # PhiID 所需的组间统计对照
 
-参考代码来自 WEIDA-DBS 固定提交 `2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c` 的 `group_comparison.py`，出处链接写在参考函数注释中。原作者此部分使用 Python，不需要新增 MATLAB 测试。
+参考代码来自 WEIDA-DBS 固定提交 `2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c` 的 `group_comparison.py`，出处链接写在正式统计函数注释中。原作者此部分使用 Python，不需要新增 MATLAB 测试。
 
 只保留：
 
@@ -13,3 +13,5 @@
 测试对象是现有 `downstream.paired_comparison`、`independent_comparison`；尚未验证草稿共享后处理包或真实队列结果。此 PR 不新增状态占比、持续时间、转移概率、状态预测、状态离散度或功能分离度测试，也不改生产算法。
 
 运行：`uv run --locked python -m unittest tests.test_upstream_postprocessing -v`。
+
+作者统计仅在 `common/postprocessing` 维护一份，本测试比较旧 downstream 与该正式实现；正式实现另由原脚本离线基准验证。

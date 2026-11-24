@@ -2,12 +2,12 @@
 import unittest
 
 import numpy as np
+from weida_postprocessing import (
+    get_fdr,
+    group_comparison,
+)
 
 from downstream import independent_comparison, paired_comparison
-from tests.references.original_postprocessing import (
-    get_fdr,
-    original_group_comparison,
-)
 
 
 class UpstreamPostprocessingTests(unittest.TestCase):
@@ -15,7 +15,7 @@ class UpstreamPostprocessingTests(unittest.TestCase):
         rng = np.random.default_rng(274)
         hc, off = rng.normal(size=(16, 16)), rng.normal(size=(25, 16))
         on = off + rng.normal(loc=.2, size=(25, 16))
-        expected_t, expected_p, expected_q = original_group_comparison(hc, off, on)
+        expected_t, expected_p, expected_q = group_comparison(hc, off, on)
         values = np.concatenate([hc, off, on])
         groups = ['HC'] * 16 + ['OFF'] * 25 + ['ON'] * 25
         ids = [f'h{i}' for i in range(16)] + list(range(25)) * 2
@@ -39,7 +39,7 @@ class UpstreamPostprocessingTests(unittest.TestCase):
         # 原脚本不排除 NaN，现实现按指标成对排除；此项记录差异，不宣称等价。
         off = np.array([[0.], [2.], [1.], [3.]])
         on = np.array([[1.], [4.], [np.nan], [7.]])
-        _, p, _ = original_group_comparison(np.array([[0.], [1.], [2.]]), off, on)
+        _, p, _ = group_comparison(np.array([[0.], [1.], [2.]]), off, on)
         self.assertTrue(np.isnan(p[1, 0]))
         actual = paired_comparison(np.r_[off, on], list(range(4))*2, ['OFF']*4+['ON']*4)
         self.assertEqual(actual['n_pairs'][0], 3)
