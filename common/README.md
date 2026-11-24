@@ -4,13 +4,11 @@
 
 | 函数 | 做什么 | 出处 |
 | --- | --- | --- |
-| `preprocess_scan` | 预处理入口 | 自编封装，[原流程](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L70-L88) |
-| `scipy.signal.detrend` | 去线性趋势 | 对应 MATLAB `detrend`，[L87](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L87) |
-| `ndarray.mean` | 求均值后减去 | 对应作者 [`demean.m`](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m) |
-| `scipy.signal.butter` | 构造带通滤波器 | 对应 MATLAB `butter`，[L75](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L75) |
-| `scipy.signal.filtfilt` | 双向滤波 | 对应 MATLAB `filtfilt`，[L88](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L88) |
-| `original_preprocess`（测试） | MATLAB 参考入口 | [原流程](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L70-L88)的函数封装 |
-| `demean`（测试） | 去均值 | 作者原函数 [`demean.m`](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m) |
+| `preprocess_scan` | 预处理入口 | [原流程](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L70-L88) |
+| `scipy.signal.detrend` | 去线性趋势 | [detrend](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L87) |
+| `ndarray.mean` | 求均值后减去 | [demean](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m) |
+| `scipy.signal.butter` | 构造带通滤波器 | [butter](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L75) |
+| `scipy.signal.filtfilt` | 双向滤波 | [filtfilt](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L88) |
 
 ## 后处理（`weida_postprocessing`）
 
