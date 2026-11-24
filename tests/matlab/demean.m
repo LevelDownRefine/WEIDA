@@ -2,11 +2,11 @@ function x=demean(x,dim)
 % 出处： https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m
 % 原版上游函数；仅添加出处说明并将注释翻译为中文，算法不变。
 
-% DEMEAN(X) 
+% DEMEAN(X)
 % 去除均值。
 %
 % DEMEAN(X,DIM)
-% 沿 X 的 DIM 维度去除均值。 
+% 沿 X 的 DIM 维度去除均值。
 
 if(nargin==1),
    dim = 1;
