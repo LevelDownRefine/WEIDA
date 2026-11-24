@@ -26,6 +26,35 @@ function values = numbers(a)
 values = jsondecode(char(py.json.dumps(a.tolist())));
 end
 
+function testPreprocessingMatchesIndependentMatlab(tc)
+% Real MATLAB reference; no Hilbert, eigs, clustering or Python reference math.
+processing = py.importlib.import_module('preprocessing');
+rng(284,'twister');
+frames = [13 48 210 312];
+trs = [2.1 1.5 2.1 2.0];
+bands = [.04 .07; .04 .07; .04 .07; .01 .08];
+for c=1:numel(frames)
+    t=(0:frames(c)-1)*trs(c);
+    bold=3+0.02*t+sin(2*pi*.055*t+(1:78)')+0.2*randn(78,frames(c));
+    [b,a]=butter(2,bands(c,:)/(1/(2*trs(c))));
+    expected=zeros(size(bold));
+    for region=1:size(bold,1)
+        ts=detrend(bold(region,:));
+        ts=ts-mean(ts);
+        expected(region,:)=filtfilt(b,a,ts);
+    end
+    input=array(jsonencode(bold));
+    actual=numbers(processing.preprocess_bold(input,pyargs( ...
+        'tr',trs(c),'band',py.tuple(num2cell(bands(c,:))))));
+    tc.verifySize(actual,size(bold));
+    tc.verifyTrue(all(isfinite(actual(:))));
+    tc.verifyEqual(actual,expected,'AbsTol',1e-8);
+    tc.verifyEqual(numbers(input),bold);
+    fprintf('MATLAB preprocessing: frames=%d TR=%g max_error=%.17g\n', ...
+        frames(c),trs(c),max(abs(actual(:)-expected(:))));
+end
+end
+
 function testRankOneFeatures(tc)
 % 相同的四条非恒定信号对应全 1 相位同步矩阵，归一化后每个权重为 -1/2。
 signal = sin((0:39)*0.7);
