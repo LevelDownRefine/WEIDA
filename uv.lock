@@ -307,14 +307,14 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "scikit-learn", specifier = ">=1.4" },
     { name = "scipy", specifier = ">=1.11" },
-    { name = "weida-postprocessing", editable = "packages/postprocessing" },
-    { name = "weida-preprocessing", editable = "packages/preprocessing" },
+    { name = "weida-postprocessing", editable = "common/postprocessing" },
+    { name = "weida-preprocessing", editable = "common/preprocessing" },
 ]
 
 [[package]]
 name = "weida-postprocessing"
 version = "0.1.0"
-source = { editable = "packages/postprocessing" }
+source = { editable = "common/postprocessing" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
@@ -331,7 +331,7 @@ requires-dist = [
 [[package]]
 name = "weida-preprocessing"
 version = "0.1.0"
-source = { editable = "packages/preprocessing" }
+source = { editable = "common/preprocessing" }
 dependencies = [
     { name = "numpy" },
     { name = "scipy" },

@@ -84,7 +84,7 @@ uv run --locked python run_features.py /path/to/model/output --output /path/to/n
 
 ## Shared amplitude preprocessing package
 
-`packages/preprocessing` is the installable `weida-preprocessing` package (NumPy/SciPy only).
+`common/preprocessing` is the installable `weida-preprocessing` package (NumPy/SciPy only).
 WEIDA's `preprocessing.py` delegates to it; downstream projects should pin a full Git commit
 that has passed this repository's Python and original MATLAB preprocessing CI.
 
@@ -98,7 +98,7 @@ Transforms are opt-in; the default returns a copy. No phase extraction or frame 
 
 ## 共享后处理
 
-`packages/postprocessing` 提供独立包 `weida-postprocessing`。输入统一为扫描 × 指标的 `FeatureTable`，保留每项的名称、单位、预先定义的校正族及方法说明。实现从 PhiID 已有研究接口抽出，两边调用同一份代码。
+`common/postprocessing` 提供独立包 `weida-postprocessing`。输入统一为扫描 × 指标的 `FeatureTable`，保留每项的名称、单位、预先定义的校正族及方法说明。实现从 PhiID 已有研究接口抽出，两边调用同一份代码。
 
 - `group_indices`：按受试者 ID 对齐 ON/OFF，检查三组及配对完整性。
 - `compare_features`：ON−OFF 配对 t 检验、OFF/ON−HC 等方差独立 t 检验，输出差值、未校正 95% 置信区间、有效样本量和 p/q。
