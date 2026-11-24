@@ -18,3 +18,9 @@ MATLAB R2025b + Signal Processing Toolbox 独立计算：去线性趋势 → 去
 uv sync --locked --python 3.11
 matlab -batch "results = runtests('tests/matlab'); disp(table(results)); assertSuccess(results)"
 ```
+
+## PhiID 读写
+
+- `original_read_bold`：作者第 25–28 行原语句，仅加参数与输出；对照 78 脑区、1/13/210 帧及带/不带 BOM，绝对容差 1e-12。
+- `write_table`：工程扩展，MATLAB `readtable` 验证字段、Unicode/引号、双精度数值、NaN/Inf。
+- ID 配对、坏文件检查由 Python 单测覆盖；作者按文件顺序固定人数，无对应函数，不宣称 MATLAB 等价。

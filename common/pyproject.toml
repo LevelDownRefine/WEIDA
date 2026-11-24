@@ -15,3 +15,4 @@ bypass-selection = true
 [tool.hatch.build.targets.wheel.force-include]
 "__init__.py" = "common/__init__.py"
 "statistics.py" = "common/statistics.py"
+"io.py" = "common/io.py"
