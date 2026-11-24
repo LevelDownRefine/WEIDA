@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """与算法无关的受试者指标表、统计检验及结果保存。"""
 import csv
 import json
@@ -9,10 +8,6 @@ import numpy as np
 
 from . import statistics
 from .statistics import (
-=======
-"""共用后处理的统计入口。"""
-from .statistics import (
->>>>>>> refactor/author-statistics
     CONTRASTS,
     GROUPS,
     compare_groups,

@@ -9,9 +9,9 @@ from scipy import stats
 from weida_postprocessing import (
     FeatureTable,
     adjust_bh,
-    statistics,
     compare_features,
     save_results,
+    statistics,
 )
 from weida_postprocessing.adapters import load_weida
 
