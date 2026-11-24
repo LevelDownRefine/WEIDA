@@ -4,7 +4,13 @@
 
 | 函数 | 做什么 | 出处 |
 | --- | --- | --- |
-| `preprocess_scan` | 按需去线性趋势、去均值、Butterworth 带通和双向滤波；保留脑区与时间点 | 根据原作者 [StateSpace_modelling.m 第 70–88 行](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L70-L88) 迁移，已做 MATLAB 对照 |
+| `preprocess_scan` | 串联幅值预处理，保留脑区与时间点 | 我们封装的 [Python 入口](preprocessing/src/weida_preprocessing/__init__.py) |
+| `scipy.signal.detrend` | 对每个脑区去线性趋势 | 对应原版 MATLAB `detrend`：[第 87 行](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L87) |
+| `numpy.ndarray.mean` | 计算时间均值，再从信号中减去 | 对应作者的 [`functions/demean.m`](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m)，由主脚本[第 87 行](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L87)调用 |
+| `scipy.signal.butter` | 构造二阶 Butterworth 带通滤波器 | 对应 MATLAB Signal Processing Toolbox 的 `butter`：[第 70–75 行](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L70-L75) |
+| `scipy.signal.filtfilt` | 沿时间轴双向滤波 | 对应 MATLAB Signal Processing Toolbox 的 `filtfilt`：[第 88 行](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L88) |
+| `original_preprocess`（测试） | 生成独立 MATLAB 参考结果 | 我们将原作者[第 70–88 行](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/StateSpace_modelling.m#L70-L88)中的幅值处理段封装为[参考函数](../tests/matlab/original_preprocess.m)，不包含 Hilbert 相位提取 |
+| `demean`（测试） | MATLAB 参考代码中去均值 | 直接取自作者的 [`functions/demean.m`](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/functions/demean.m)，仅翻译注释并补充出处 |
 
 ## 后处理（`weida_postprocessing`）
 
