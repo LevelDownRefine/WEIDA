@@ -11,7 +11,7 @@ else
 end
 pyenv('Version', interpreter, 'ExecutionMode', 'OutOfProcess');
 insert(py.sys.path, int32(0), root);
-% Test the installed package consumed by WEIDA and PhiID.
+% 测试 WEIDA 和 PhiID 共用的已安装预处理包。
 tc.TestData.processing = py.importlib.import_module('weida_preprocessing');
 end
 

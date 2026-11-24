@@ -1,16 +1,15 @@
-"""Shared BOLD amplitude preprocessing, independent of the analysis method."""
+"""共享 BOLD 幅值预处理，与后续分析方法无关。"""
 import numpy as np
 from weida_preprocessing import preprocess_scan
 
 
 def preprocess_bold(scan, tr=2.1, band=(0.04, 0.07)):
-    """Return region x time amplitudes without modifying the input.
+    """返回脑区 × 时间的幅值矩阵，不修改输入。
 
-    Match the original WEiDA order: linear detrend, demean, second-order
-    Butterworth bandpass, then filtfilt with padlen=12 for the default filter.
-    Padding is temporary extension, not removal of original frames. No phase
-    extraction, edge trimming or disk caching is performed here.
-    band=None explicitly preserves loaded amplitudes (no detrend or filtering).
+    按原版 WEiDA 顺序执行：去线性趋势、去均值、二阶 Butterworth 带通，
+    再用 filtfilt 双向滤波；默认滤波器的 padlen 为 12。
+    填充仅用于临时延拓，不删除原始时间点；此处不提取相位、不裁剪首尾，
+    也不缓存到磁盘。band=None 显式保留输入幅值，不去趋势、不滤波。
     """
     x = np.array(scan, dtype=float, copy=True)
     if x.ndim != 2 or min(x.shape) == 0 or not np.isfinite(x).all():

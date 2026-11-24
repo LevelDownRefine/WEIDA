@@ -1,4 +1,4 @@
-"""Amplitude preprocessing and the boundary before method-specific phase extraction."""
+"""测试幅值预处理，以及进入方法专属相位提取前的边界。"""
 import unittest
 from unittest.mock import patch
 

@@ -1,10 +1,10 @@
-"""BOLD amplitude preprocessing; no phase extraction or edge trimming."""
+"""BOLD 幅值预处理；不提取相位，不裁剪首尾时间点。"""
 import numpy as np
 from scipy.signal import butter, detrend, filtfilt
 
 
 def preprocess_scan(scan, *, remove_trend=False, demean=False, band=None, tr=None):
-    """Process one region-by-time matrix. All amplitude transforms are opt-in."""
+    """处理一个脑区 × 时间矩阵；各项幅值变换均需显式启用。"""
     data = np.array(scan, dtype=float, copy=True)
     if data.ndim != 2 or not data.size or not np.isfinite(data).all():
         raise ValueError('Expected a finite region-by-time matrix')
