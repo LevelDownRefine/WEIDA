@@ -7,4 +7,8 @@ name = "weida-postprocessing"
 version = "0.1.0"
 description = "Shared subject-level statistics and plots for WEIDA and PhiID"
 requires-python = ">=3.11"
-dependencies = ["numpy>=1.26", "scipy>=1.11", "matplotlib>=3.11.2"]
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "statsmodels>=0.15.0",
+]

@@ -98,18 +98,10 @@ Transforms are opt-in; the default returns a copy. No phase extraction or frame 
 
 ## 共享后处理
 
-`common/postprocessing` 提供独立包 `weida-postprocessing`。输入统一为扫描 × 指标的 `FeatureTable`，保留每项的名称、单位、预先定义的校正族及方法说明。实现从 PhiID 已有研究接口抽出，两边调用同一份代码。
-
-- `group_indices`：按受试者 ID 对齐 ON/OFF，检查三组及配对完整性。
-- `compare_features`：ON−OFF 配对 t 检验、OFF/ON−HC 等方差独立 t 检验，输出差值、未校正 95% 置信区间、有效样本量和 p/q。
-- `adjust_bh`：每个对比 × 指标族分别做 BH；不可估计项保留族规模。
-- `plot_features`：分布图和患者配对图，按族分页，输出 PNG/PDF。
-- `save_results`：共用统计表、个体指标表、方法元数据和图件保存。
+`common/postprocessing` 提供 `weida-postprocessing`，直接封装原作者 `group_comparison.py` 的三组 t 检验和 statsmodels BH。公共包本身与固定版本参考函数对照，覆盖正常、NaN 和退化输入；不再添加置信区间、自动排除缺失值或替换退化结果。工程封装理由见 [函数与出处](common/README.md)。
 
 ```sh
 uv run --locked python run_postprocessing.py --input /path/to/model_output --output /path/to/shared_report
 ```
 
-可添加 `--features /path/to/run_features_output`。旧 `run_features.py` 的统计输出保持原口径；旧 BH 只计有限 p 值，与共享接口对不可估计项的处理不同。该差异明确保留，不宣称两套旧结果完全等价。
-
-状态指标、PhiID 连接汇总、连接图、临床关联及整图置换仍属于各自方法。共享包测试覆盖 SciPy 数值对照、ID 重排、缺失值、校正族和输出图表；此处没有声称与论文 MATLAB 的后处理完全等价。
+可添加 `--features /path/to/run_features_output`。输出 CSV 与方法元数据；未对齐的通用绘图暂不提供。旧 `run_features.py` 不变，与本入口的缺失值及退化结果策略不同。

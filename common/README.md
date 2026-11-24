@@ -12,15 +12,14 @@
 
 ## 后处理（`weida_postprocessing`）
 
-| 函数 / 类型 | 做什么 | 出处 |
+| 函数 / 类型 | 做什么 | 出处 / 封装理由 |
 | --- | --- | --- |
-| `FeatureTable` | 保存扫描 × 指标及其名称、单位、校正族 | 自编，抽自 PhiID 的 `research.py` |
-| `group_indices` | 按受试者 ID 配对 ON/OFF，检查重复与缺失 | 自编，抽自 PhiID 的 `research.py` |
-| `compare_features` | 三组 t 检验、均差、95% 置信区间及 p/q | 自编；检验方式参考原作者 [group_comparison.py](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py)，置信区间为新增 |
-| `adjust_bh` | 按对比和指标族做 BH 校正 | 自编；参考同上，额外保留不可估计项的族位置 |
-| `plot_features` | 分布、散点和患者配对图，输出 PNG/PDF | 自编，抽自 PhiID 的 `research.py` |
-| `write_table` | 保存 CSV 表 | 自编，抽自 PhiID 的 `research.py` |
-| `save_results` | 保存统计表、个体指标、元数据及图件 | 自编，抽自 PhiID 的 `scripts/analyze_results.py` |
-| `adapters.load_weida` | 将已有 WEIDA 结果转为 `FeatureTable` | 自编，抽自 PhiID 的 `result_adapters.py` |
+| `compare_features` | 三组 t 检验、均值/标准差、均差及 p/q | [作者检验](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py)；均差仅汇总效应方向 |
+| `adjust_bh` | statsmodels BH 校正 | [get_fdr](https://github.com/chenfei-ye/WEIDA-DBS/blob/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c/group_comparison.py) |
+| `FeatureTable` | 指标、单位和校正族 | 工程封装：避免混淆指标与检验族 |
+| `group_indices` | ID 配对与完整性检查 | 工程封装：避免按文件顺序错配患者 |
+| `write_table` | 保存 CSV | 工程封装：统一输出字段 |
+| `save_results` | 保存统计、个体指标和元数据 | 工程封装：记录方法、避免覆盖 |
+| `adapters.load_weida` | 读取已有 WEIDA 结果 | 工程封装：接入已有输出，不重算指标 |
 
-后处理是自编公共实现；参考原作者的方法不等于已验证全部输出与其完全一致。
+统计不删除 NaN、不替换退化结果、不增加置信区间；每个对比按预先声明的指标族校正。直接对照公共包的测试见 [test_postprocessing.py](../tests/test_postprocessing.py)。作图暂不纳入，待对齐作者实现。

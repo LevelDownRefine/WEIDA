@@ -9,6 +9,8 @@ from scipy import stats
 from weida_postprocessing import FeatureTable, adjust_bh, compare_features, save_results
 from weida_postprocessing.adapters import load_weida
 
+from tests.references.original_postprocessing import get_fdr, original_group_comparison
+
 
 class SharedResearchTests(unittest.TestCase):
     def setUp(self):
@@ -29,17 +31,17 @@ class SharedResearchTests(unittest.TestCase):
                                 ('one', 'one'), ('u', 'u'), 'test', 'test')
         self.assertEqual(compare_features(shuffled), result)
 
-    def test_bh_keeps_undefined_slots(self):
-        np.testing.assert_allclose(adjust_bh([.02, .04, np.nan]), [.06, .06, np.nan])
+    def test_bh_preserves_author_nan_behavior(self):
+        np.testing.assert_allclose(adjust_bh([.02, .04, np.nan]), get_fdr([.02, .04, np.nan]), equal_nan=True)
 
-    def test_shared_report_and_figures(self):
+    def test_shared_report_without_unvalidated_figures(self):
         with tempfile.TemporaryDirectory() as d:
             output = Path(d) / 'report'
             values = np.random.default_rng(4).normal(size=(9, 2))
             table = FeatureTable(values, self.scans, ('a', 'b'), ('one', 'one'), ('bit', 'bit'), 'test', 'test')
             save_results(table, output)
-            self.assertEqual(len(list(output.glob('*.png'))), 2)
-            self.assertEqual(len(list(output.glob('*.pdf'))), 2)
+            self.assertEqual(len(list(output.glob('*.png'))), 0)
+            self.assertEqual(len(list(output.glob('*.pdf'))), 0)
             self.assertTrue((output / 'statistics.csv').stat().st_size > 100)
             self.assertTrue((output / 'subject_features.csv').stat().st_size > 100)
             meta = json.loads((output / 'metadata.json').read_text(encoding='utf-8'))
@@ -52,11 +54,31 @@ class SharedResearchTests(unittest.TestCase):
         values=np.random.default_rng(17).normal(size=(9,2));values[3,0]=np.nan
         table=FeatureTable(values,self.scans,('a','b'),('one','two'),('u','v'),'test','test')
         result=compare_features(table)
-        self.assertEqual(result[0]['n_first'],2)
-        self.assertEqual(result[0]['n_second'],2)
+        self.assertEqual(result[0]['n_first'],3)
+        self.assertEqual(result[0]['n_second'],3)
         self.assertEqual(result[1]['n_first'],3)
-        for row in result: self.assertEqual(row['p'],row['q'])
-        self.assertAlmostEqual(result[0]['p'],stats.ttest_rel(values[7:9,0],values[4:6,0]).pvalue)
+        for row in result: np.testing.assert_allclose(row['p'],row['q'],equal_nan=True)
+        self.assertTrue(np.isnan(result[0]['p']))
+
+    def test_package_directly_matches_author(self):
+        rng = np.random.default_rng(18)
+        for case in ('finite', 'missing', 'degenerate'):
+            values = rng.normal(size=(9, 16))
+            if case == 'missing':
+                values[3, 0] = np.nan
+            if case == 'degenerate':
+                values[:, 0] = 1
+            table = FeatureTable(values, self.scans, tuple(map(str, range(16))),
+                                 ('phiid',)*16, ('bit',)*16, 'PhiID', 'test')
+            expected = original_group_comparison(values[:3], values[3:6], values[6:])
+            rows = compare_features(table)
+            for contrast, source in [('ON-OFF', 1), ('OFF-HC', 0), ('ON-HC', 2)]:
+                selected = [r for r in rows if r['contrast'] == contrast]
+                for key, reference in zip(('t', 'p', 'q'), expected):
+                    np.testing.assert_allclose([r[key] for r in selected], reference[source],
+                                               atol=1e-12, rtol=0, equal_nan=True)
+                self.assertNotIn('ci95_low', selected[0])
+                self.assertNotIn('ci95_high', selected[0])
 
     def test_weida_saved_result_adapter(self):
         with tempfile.TemporaryDirectory() as d:
