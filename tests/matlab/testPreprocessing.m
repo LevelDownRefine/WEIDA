@@ -4,7 +4,7 @@ end
 
 function setupOnce(tc)
 root = fileparts(fileparts(fileparts(mfilename('fullpath'))));
-upstream = fullfile(root, '.reference', 'WEIDA-DBS');
+upstream = fullfile(root, 'tests', 'matlab', 'upstream', 'WEIDA-DBS');
 source = fileread(fullfile(upstream, 'StateSpace_modelling.m'));
 % Execute the author's statements verbatim, stopping before Hilbert/WEiDA.
 settings = regexp(source, '(?m)^fnq=1/\(2\*TR\);[\s\S]*?^clear fnq flp fhi Wn k', 'match');

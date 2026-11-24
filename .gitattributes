@@ -1,0 +1,2 @@
+tests/matlab/upstream/WEIDA-DBS/*.m -text
+tests/matlab/upstream/WEIDA-DBS/functions/*.m -text

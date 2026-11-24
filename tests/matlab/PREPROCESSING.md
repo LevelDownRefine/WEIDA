@@ -2,7 +2,7 @@
 
 ## 原版算法代码出处
 
-固定提交：`2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c`。下列代码在 CI 中从原仓库检出，未改写。
+固定提交：`2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c`。下列完整源文件原样保存在 `upstream/WEIDA-DBS/`，未改写；Python 测试检查 Git blob SHA-1，防止基准被意外修改。
 
 | 代码 | 出处 | 用途 |
 | --- | --- | --- |
@@ -27,7 +27,7 @@
 
 ## 覆盖范围与运行
 
-- 基准直接来自 [WEIDA-DBS 固定版本](https://github.com/chenfei-ye/WEIDA-DBS/tree/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c)。CI 检出该版本，不自行重写 MATLAB 参考算法。
+- 基准直接来自 [WEIDA-DBS 固定版本](https://github.com/chenfei-ye/WEIDA-DBS/tree/2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c)。CI 直接读取仓库内该版本的源文件，不自行重写 MATLAB 参考算法。
 - 从 `StateSpace_modelling.m` 原样提取滤波器设置及 `ts=demean(detrend(BOLD(seed,:))); signal_filt =filtfilt(bfilt,afilt,ts);`；`demean.m` 直接使用该仓库的 `functions/demean.m`。提取不到唯一代码块时测试报错。
 - 对照安装包入口 `weida_preprocessing.preprocess_scan`：去线性趋势、去均值、二阶 Butterworth 0.04–0.07 Hz 带通及 `filtfilt`。
 - 78 脑区，13/48/210/312 帧，TR 为 2.1/1.5/2.1/2.0 秒；包含所有首尾时间点，检查形状、有限值及输入不被修改。逐元素绝对容差 `1e-8`，打印每组最大误差。
@@ -37,8 +37,6 @@
 
 ```sh
 uv sync --locked --python 3.11
-git clone https://github.com/chenfei-ye/WEIDA-DBS.git .reference/WEIDA-DBS
-git -C .reference/WEIDA-DBS checkout 2e20b0bc956e6eb0eb8e06e2aaf00a93b014e72c
 matlab -batch "results = runtests('tests/matlab'); disp(table(results)); assertSuccess(results)"
 ```
 

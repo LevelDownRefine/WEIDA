@@ -4,5 +4,3 @@ output/
 validation_output/
 
 .venv/
-
-.reference/
