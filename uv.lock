@@ -10,6 +10,7 @@ resolution-markers = [
 [manifest]
 members = [
     "weida",
+    "weida-postprocessing",
     "weida-preprocessing",
 ]
 
@@ -393,12 +394,8 @@ dependencies = [
     { name = "numpy" },
     { name = "scikit-learn" },
     { name = "scipy" },
+    { name = "weida-postprocessing" },
     { name = "weida-preprocessing" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "statsmodels" },
 ]
 
 [package.metadata]
@@ -407,11 +404,29 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "scikit-learn", specifier = ">=1.4" },
     { name = "scipy", specifier = ">=1.11" },
+    { name = "weida-postprocessing", editable = "common/postprocessing" },
     { name = "weida-preprocessing", editable = "packages/preprocessing" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "statsmodels", specifier = ">=0.15.0" }]
+dev = []
+
+[[package]]
+name = "weida-postprocessing"
+version = "0.1.0"
+source = { editable = "common/postprocessing" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "statsmodels" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "numpy", specifier = ">=1.26" },
+    { name = "scipy", specifier = ">=1.11" },
+    { name = "statsmodels", specifier = ">=0.15.0" },
+]
 
 [[package]]
 name = "weida-preprocessing"
